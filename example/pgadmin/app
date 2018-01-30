@@ -1,0 +1,27 @@
+#!/usr/bin/env docker.sh
+
+dir=$(cd "$(dirname "$file")"; pwd)
+vol_opts="-v '$dir/data:/pgadmin'"
+
+name=$(basename "$dir")-$(printf %s "$dir" | cksum |  awk '{print $1}')
+image=thajeztah/pgadmin4
+net=net0
+opts="
+  --restart always
+  $vol_opts
+  -p 5050:5050
+  --network-alias '$(basename "$dir")'
+"
+
+pre_start() (
+  "$dir/../postgres/app" start || { echo 'failed to start postgres'; return 1; }
+  if [ "${1:-}" = run ]; then
+    # we need to chown the dir
+    tmp=$(quote "$vol_opts") || return 1
+    eval "set -- $tmp"
+    docker run -it --rm \
+      "$@" \
+      -u 0:0 --entrypoint /bin/sh \
+      "$image" -c 'chown pgadmin:pgadmin /pgadmin'
+  fi
+)
