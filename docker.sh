@@ -234,10 +234,10 @@ main() (
       ;;
 
     logs|port)
-      if running "$name"; then
+      if exists container "$name"; then
         docker "$action" "$name" "$@"
       else
-        echo 'container is not running' >&2
+        echo "container not exists" >&2
         return 1
       fi
       return $?
@@ -303,6 +303,7 @@ if grep -qF 6245455020934bb2ad75ce52bbdc54b7 "$0" 2>/dev/null; then
     exit 1
   fi
   file=$1; shift
+  [ "${file##*/}" = "$file" ] && file="./$file"
   . "$file" || exit 1
   main "$@"
 fi
