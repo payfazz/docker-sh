@@ -8,7 +8,7 @@ This script is written with POSIX shell standard, so it will work with `bash`, `
 
 ## How to use it
 There are 2 way to use this script
-1. (RECOMMENDED). Use it as interpreter, you need to install it in your `PATH`
+1. (RECOMMENDED). Use it as interpreter, you need to install it in your `PATH` e.g. by copy `docker.sh` file to `/usr/local/bin`
 ```sh
 #!/usr/env/bin docker.sh
 
