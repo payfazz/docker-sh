@@ -110,6 +110,7 @@ exec_fn_opt() (
 )
 
 main() (
+  action=help
   [ $# -gt 0 ] && { action=$1; shift; }
   constructed_run_cmds=$(construct_run_cmds) || return $?
   case ${action:-} in
@@ -275,7 +276,7 @@ main() (
       return $?
       ;;
 
-    *)
+    help)
       cat <<EOF >&2
 Available commands:
   start              Start the container
@@ -291,9 +292,21 @@ Available commands:
   name               Show the name of the container
   show_cmds          Show the arguments to docker run
   show_running_cmds  Show the arguments to docker run in current running container
+  help               Show this message
 EOF
-      exit 1
+      return 1
       ;;
+
+  *)
+    action="command_$action"
+    if type "$action" 2>/dev/null | grep -q -F function; then
+      "$action" "$@"
+    else
+      printf 'function "%s" not exists\n' "$action" >&2
+      return 1
+    fi
+    return $?
+    ;;
   esac
 )
 
