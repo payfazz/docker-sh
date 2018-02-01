@@ -1,16 +1,15 @@
 #!/usr/bin/env docker.sh
 
-dir=$(cd "$(dirname "$file")"; pwd)
-vol_opts="-v '$dir/data:/pgadmin'"
+vol_opts="
+  -v '$dir/data:/pgadmin'
+"
 
-name=$(basename "$dir")-$(printf %s "$dir" | cksum |  awk '{print $1}')
 image=thajeztah/pgadmin4
 net=net0
 opts="
   --restart always
   $vol_opts
   -p 5050:5050
-  --network-alias '$(basename "$dir")'
 "
 
 pre_start() (

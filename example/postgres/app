@@ -1,12 +1,9 @@
 #!/usr/bin/env docker.sh
 
-dir=$(cd "$(dirname "$file")"; pwd)
-name=$(basename "$dir")-$(printf %s "$dir" | cksum |  awk '{print $1}')
 image=postgres:9-alpine
 net=net0
 opts="
   --restart always
   -v '$dir/data:/var/lib/postgresql/data'
   -p 5432:5432
-  --network-alias '$(basename "$dir")'
 "
