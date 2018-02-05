@@ -1,0 +1,14 @@
+#!/usr/bin/env docker.sh
+
+name=$filename-$dirsum
+image=phpmyadmin/phpmyadmin:latest
+net=net-$dirsum
+opts="
+  -p 8080:80
+
+  -e PMA_HOST=db
+"
+
+pre_start() {
+  "$dir/mariadb" start
+}
