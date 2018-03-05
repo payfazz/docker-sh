@@ -266,6 +266,7 @@ main() (
       ;;
 
     name) echo "$name"; return 0 ;;
+    image) echo "$image"; return 0 ;;
     show_cmds) echo "$constructed_run_cmds"; return 0 ;;
 
     show_running_cmds)
@@ -292,6 +293,7 @@ Available commands:
   port               Show port forwarding
   status             Show status of the container
   name               Show the name of the container
+  image              Show the image of the container
   show_cmds          Show the arguments to docker run
   show_running_cmds  Show the arguments to docker run in current running container
   help               Show this message
