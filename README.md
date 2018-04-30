@@ -130,3 +130,9 @@ don't forget to change permission so you can execute the script
 now, you can run them with just on command
 
     pgadmin/app start
+
+
+## TODO
+
+* improve `quote`, for now, `quote` is very expensive, it can't be used for long string.
+  it also mean that you cannot use long string in `opts` and `args` because internally it use `quote`
