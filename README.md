@@ -6,6 +6,11 @@ Because this is POSIX shell script, the possibility is limitless
 
 This script is written with POSIX shell standard, so it will work with `bash`, `ash`, `dash` or any shell that follow POSIX standard
 
+## How to install
+
+    curl -sSLf https://raw.githubusercontent.com/payfazz/docker-sh/master/install.sh | sudo sh
+
+
 ## How to use it
 There are 2 way to use this script
 1. (RECOMMENDED). Use it as interpreter, you need to install it in your `PATH` e.g. by copy `docker.sh` file to `/usr/local/bin`
@@ -19,7 +24,7 @@ opts="
 "
 ```
 
-2. source `docker.sh` from your script
+2. (NOT RECOMMENDED). source `docker.sh` from your script
 ```sh
 #!/bin/sh
 . ./docker.sh
