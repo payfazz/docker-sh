@@ -286,12 +286,23 @@ main() (
 
     update)
       if running "$name"; then
-        "$0" "$file" pull
-        case $("$0" "$file" status) in
-        *different_*)
-          "$0" "$file" stop && "$0" "$file" rm && "$0" "$file" start
-          ;;
-        esac
+        docker pull "$image"
+        if [ -z "$file" ]; then
+          case $("$0" status) in
+          *different_*)
+            echo "Recreating container ..." >&2
+            "$0" stop && "$0" rm && "$0" start
+            ;;
+          esac
+        else
+          case $("$0" "$file" status) in
+          *different_*)
+            echo "Recreating container ..." >&2
+            "$0" "$file" stop && "$0" "$file" rm && "$0" "$file" start
+            ;;
+          esac
+        fi
+        return $?
       else
         echo 'container is not running' >&2
         return 1
