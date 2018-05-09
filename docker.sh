@@ -279,6 +279,25 @@ main() (
       return $?
       ;;
 
+    pull)
+      docker pull "$image"
+      return $?
+      ;;
+
+    update)
+      if running "$name"; then
+        "$0" "$file" pull
+        case $("$0" "$file" status) in
+        *different_*)
+          "$0" "$file" stop && "$0" "$file" rm && "$0" "$file" start
+          ;;
+        esac
+      else
+        echo 'container is not running' >&2
+        return 1
+      fi
+      ;;
+
     help)
       cat <<EOF >&2
 Available commands:
@@ -296,6 +315,9 @@ Available commands:
   image              Show the image of the container
   show_cmds          Show the arguments to docker run
   show_running_cmds  Show the arguments to docker run in current running container
+  pull               Pull the image
+  update             pull the image and recreate container
+                     if status return different_image or different_opts
   help               Show this message
 EOF
       return 1
