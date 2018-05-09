@@ -5,6 +5,8 @@ set -eu
 download=y
 target=${1:-/usr/local/bin/docker.sh}
 
+mkdir -p "$(dirname "$target")"
+
 if [ "$(basename "$0")" = "install.sh" ]; then
     file="$(dirname "$0")/docker.sh"
     if [ -f "$file" ]; then

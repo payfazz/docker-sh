@@ -8,7 +8,13 @@ This script is written with POSIX shell standard, so it will work with `bash`, `
 
 ## How to install
 
+to install in default location (`/usr/local/bin/docker.sh`)
+
     curl -sSLf https://raw.githubusercontent.com/payfazz/docker-sh/master/install.sh | sudo sh
+
+or to custom location, e.g. /opt/bin/docker.sh
+
+    curl -sSLf https://raw.githubusercontent.com/payfazz/docker-sh/master/install.sh | sudo sh -s - /opt/bin/docker.sh
 
 
 ## How to use it
