@@ -58,15 +58,17 @@ Some variable will be defined before execute your spec file:
 - `file` will set to path of spec file
 - `dirname` will set to directory name of spec file (name only, without path)
 - `filename` will set to name of spec file (name only, without path)
-- `dirsum` checksum if `dir`, you should use this to avoud name collision
+- `dirsum` checksum of `dir`, you should use this to avoid name collision
 
 if `name` is not specified, it will be set to `$dirname-$dirsum`.
 
 #### `quote` function
-because POSIX shell does't support array, I provide `quote` function utility, to convert string to quoted one so you can use it in `eval` and `set` command
-```shell
+because POSIX shell does't support array (actually It doest provide ONE array, the args, `"$@"`), I provide `quote` function utility, to convert string to quoted one so you can use it in `eval` and `set` command to modify `"$@"` safely
+```sh
+old_args=$(quote "$@")
 eval "set -- $(quote "a b 'c d' \"e'f\"")"
 for x; do echo ">$x<"; done
+eval "set -- $old_args"
 ```
 will print:
 ```
