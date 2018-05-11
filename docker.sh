@@ -267,6 +267,7 @@ main() (
 
     name) echo "$name"; return 0 ;;
     image) echo "$image"; return 0 ;;
+    net) echo "${net:-bridge}"; return 0 ;;
     show_cmds) echo "$constructed_run_cmds"; return 0 ;;
 
     show_running_cmds)
@@ -324,6 +325,7 @@ Available commands:
   status             Show status of the container
   name               Show the name of the container
   image              Show the image of the container
+  net                Show the primary network of the container
   show_cmds          Show the arguments to docker run
   show_running_cmds  Show the arguments to docker run in current running container
   pull               Pull the image
