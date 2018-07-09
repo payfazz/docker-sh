@@ -287,7 +287,15 @@ main() (
 
     update)
       if running "$name"; then
-        docker pull "$image"
+        pull=y
+        for arg; do
+          case $arg in
+          -n|--nopull)
+            pull=n
+            ;;
+          esac
+        done
+        [ "$pull" = "y" ] && docker pull "$image"
         if [ -z "$file" ]; then
           case $("$0" status) in
           *different_*)
