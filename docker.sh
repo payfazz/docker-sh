@@ -42,8 +42,15 @@ quote() (
       backslash)  state=$backslash_ret
                   case $char in
                   $nl) : ;;
-                  \') current="$current\\'\\''" ;;
-                  *)  current="$current\\$char" ;;
+                  \\) current="$current$char" ;;
+                  \') case $backslash_ret in
+                      normal) current="$current'\\''" ;;
+                      *)      current="$current\\'\\''" ;;
+                      esac ;;
+                  *)  case $backslash_ret in
+                      normal) current="$current$char" ;;
+                      *)      current="$current\\$char" ;;
+                      esac ;;
                   esac ;;
       single)     case $char in
                   \') state=normal ;;
