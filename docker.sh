@@ -6,66 +6,93 @@
 # every code must compatible with POSIX shell
 
 quote() (
-  ret=; nl=$(printf '\nx'); nl=${nl%x}; no_proc=${no_proc:-n}; count=${count:--1}
-  for next; do
-    char=; current=; state=discard; read=y; backslash_ret=
+  ret=; curr=; PSret=; tmp=; token=; no_proc=${no_proc:-n}; count=${count:--1};
+  if ! ( count=$((count+0)) ) 2>/dev/null; then echo "count must be integer" >&2; return 1; fi
+  case $no_proc in y|n) : ;; *) echo "no_proc must be y or n" >&2; return 1 ;; esac
+  SEP=$(printf "\n \t"); nl=$(printf '\nx'); nl=${nl%x};
+  for rest; do
+    nextop=RN
     while [ "$count" != 0 ]; do
-      case $read in
-      n)  read=y ;;
-      y)  case $next in "") case $state in
-            discard)        break ;;
-            normal)         ret="$ret'$current' "; count=$((count-1))
-                            break ;;
-            backslash)      echo 'premature end of string' >&2; return 1 ;;
-            single|double)  echo "unmatched $state quote" >&2; return 1 ;;
-          esac ;; esac
-          char=${next%"${next#?}"}; next=${next#"$char"} ;;
-      esac
-      case $state in
-      discard)    case $char in [!$IFS]) state=normal; read=n ;; esac ;;
-      normal)     case $no_proc in
-                  n)  case $char in
-                      \\)     backslash_ret=$state; state=backslash ;;
-                      \')     state=single; ;;
-                      \")     state=double; ;;
-                      [$IFS]) ret="$ret'$current' "; count=$((count-1))
-                              current=; state=discard ;;
-                      *)      current="$current$char" ;;
+      case $nextop in
+      R*) nextop="P${nextop#?}"
+          token=${rest%%[!$SEP]*}; rest=${rest#"$token"}
+          case $token in '') token=${rest%%[$SEP]*}; rest=${rest#"$token"} ;; esac
+          case $token in '') case $rest in '') case $curr in '') break ;; esac ;; esac ;; esac ;;
+      PN) case $token in
+          *[$SEP]*|'')
+              nextop=RN; tmp=n
+              case $token in
+              '') case $rest in '') tmp=y ;; esac ;;
+              *)  case $curr in '') : ;; *) tmp=y ;; esac ;;
+              esac
+              case $tmp in y) ret="$ret'$curr' "; curr=; count=$((count-1)) ;; esac ;;
+          *)  case $no_proc in
+              y)  ret="$ret$(printf %s\\n "$token" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/'/") "
+                  count=$((count-1)); nextop=RN ;;
+              n)  case $token in
+                  *[\\\'\"]*)
+                      tmp=${token%%[\\\'\"]*}; token=${token#"$tmp"}; curr="$curr$tmp"
+                      case $token in
+                      \\*) token=${token#\\}; nextop=PS; PSret=PN ;;
+                      \'*) token=${token#\'}; nextop=PQ ;;
+                      \"*) token=${token#\"}; nextop=PD ;;
                       esac ;;
-                  y)  case $char in
-                      \')     current="$current'\\''" ;;
-                      [$IFS]) ret="$ret'$current' "; count=$((count-1))
-                              current=; state=discard ;;
-                      *)      current="$current$char" ;;
-                      esac ;;
+                  *)  ret="$ret'$curr$token' "; curr=; count=$((count-1)); nextop=RN ;;
                   esac ;;
-      backslash)  state=$backslash_ret
-                  case $char in
-                  $nl) : ;;
-                  \\) current="$current$char" ;;
-                  \') case $backslash_ret in
-                      normal) current="$current'\\''" ;;
-                      *)      current="$current\\'\\''" ;;
-                      esac ;;
-                  *)  case $backslash_ret in
-                      normal) current="$current$char" ;;
-                      *)      current="$current\\$char" ;;
-                      esac ;;
+              esac ;;
+          esac ;;
+      PS) tmp=${token%"${token#?}"}; token=${token#"$tmp"}
+          case $tmp in
+          '') case $rest in
+              '') echo 'premature end of string' >&2; return 1 ;;
+              *)  nextop=RS ;;
+              esac ;;
+          $nl) nextop=$PSret ;;
+          \') nextop=$PSret
+              case $PSret in
+              PN) curr="$curr'\\''" ;;
+              *)  curr="$curr\\'\\''" ;;
+              esac ;;
+          *)  nextop=$PSret
+              case $tmp in
+              \\) curr="$curr$tmp" ;;
+              *)  case $PSret in
+                  PN) curr="$curr$tmp" ;;
+                  *)  curr="$curr\\$tmp" ;;
                   esac ;;
-      single)     case $char in
-                  \') state=normal ;;
-                  *)  current="$current$char" ;;
-                  esac ;;
-      double)     case $char in
-                  \\) backslash_ret=$state; state=backslash ;;
-                  \') current="$current'\\''" ;;
-                  \") state=normal ;;
-                  *)  current="$current$char" ;;
-                  esac ;;
+              esac ;;
+          esac ;;
+      PQ) tmp=${token%%\'*}; token=${token#"$tmp"}; curr="$curr$tmp"
+          case $token in
+          \'*)  token=${token#\'}; nextop=PN ;;
+          '')   case $rest in
+                '') echo 'unmatched single quote' >&2; return 1 ;;
+                *) nextop=RQ ;;
+                esac ;;
+          *)    curr="$curr$token"; token= ;;
+          esac ;;
+      PD) tmp=${token%%[\\\'\"]*}; token=${token#"$tmp"}; curr="$curr$tmp"
+          case $token in
+          \"*)  token=${token#\"}; nextop=PN ;;
+          '')   case $rest in
+                '') echo 'unmatched double quote' >&2; return 1 ;;
+                *) nextop=RD ;;
+                esac ;;
+          *)    case $token in
+                *[\\\']*)
+                    tmp=${token%%[\\\']*}; token=${token#"$tmp"}; curr="$curr$tmp"
+                    case $token in
+                    \\*) token=${token#\\}; nextop=PS; PSret=PD ;;
+                    \'*) token=${token#\'}; curr="$curr'\\''" ;;
+                    esac ;;
+                *)  curr="$curr$token"; token= ;;
+                esac ;;
+          esac ;;
+      *)  printf "BUG: quote: invalid nextop >%s<\n" "$nextop" >&2; return 1 ;;
       esac
     done
   done
-  printf '%s\n' "${ret% }"
+  printf %s\\n "${ret% }"
 )
 
 exists() {
