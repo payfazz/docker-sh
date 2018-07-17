@@ -16,16 +16,14 @@ quote() (
       case $nextop in
       R*) nextop="P${nextop#?}"
           token=${rest%%[!$SEP]*}; rest=${rest#"$token"}
-          case $token in '') token=${rest%%[$SEP]*}; rest=${rest#"$token"} ;; esac
-          case $token in '') case $rest in '') case $curr in '') break ;; esac ;; esac ;; esac ;;
+          if [ -z "$token" ]; then token=${rest%%[$SEP]*}; rest=${rest#"$token"}; fi
+          [ -z "$token" -a -z "$rest" -a -z "$curr" ] && break ;;
       PN) case $token in
           *[$SEP]*|'')
-              nextop=RN; tmp=n
-              case $token in
-              '') case $rest in '') tmp=y ;; esac ;;
-              *)  case $curr in '') : ;; *) tmp=y ;; esac ;;
-              esac
-              case $tmp in y) ret="$ret'$curr' "; curr=; count=$((count-1)) ;; esac ;;
+              nextop=RN; tmp=
+              if [ -z "$token" ]; then [ -z "$rest" ] && tmp=y;
+              else [ -n "$curr" ] && tmp=y; fi
+              if [ "$tmp" ]; then ret="$ret'$curr' "; curr=; count=$((count-1)); fi ;;
           *)  case $no_proc in
               y)  ret="$ret$(printf %s\\n "$token" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/'/") "
                   count=$((count-1)); nextop=RN ;;
@@ -43,50 +41,36 @@ quote() (
           esac ;;
       PS) tmp=${token%"${token#?}"}; token=${token#"$tmp"}
           case $tmp in
-          '') case $rest in
-              '') echo 'premature end of string' >&2; return 1 ;;
-              *)  nextop=RS ;;
-              esac ;;
+          '') nextop=RS
+              if [ -z "$rest" ]; then echo 'premature end of string' >&2; return 1; fi ;;
           $nl) nextop=$PSret ;;
           \') nextop=$PSret
-              case $PSret in
-              PN) curr="$curr'\\''" ;;
-              *)  curr="$curr\\'\\''" ;;
-              esac ;;
-          *)  nextop=$PSret
-              case $tmp in
-              \\) curr="$curr$tmp" ;;
-              *)  case $PSret in
-                  PN) curr="$curr$tmp" ;;
-                  *)  curr="$curr\\$tmp" ;;
-                  esac ;;
-              esac ;;
+              if [ "$PSret" = PN ]; then curr="$curr'\\''"
+              else curr="$curr\\'\\''"; fi ;;
+          \\) nextop=$PSret; curr="$curr$tmp" ;;
+          *)  nextop=$PSret;
+              if [ "$PSret" = PN ]; then curr="$curr$tmp"
+              else curr="$curr\\$tmp"; fi ;;
           esac ;;
       PQ) tmp=${token%%\'*}; token=${token#"$tmp"}; curr="$curr$tmp"
           case $token in
           \'*)  token=${token#\'}; nextop=PN ;;
-          '')   case $rest in
-                '') echo 'unmatched single quote' >&2; return 1 ;;
-                *) nextop=RQ ;;
-                esac ;;
+          '')   nextop=RQ
+                if [ -z "$rest" ]; then echo 'unmatched single quote' >&2; return 1; fi ;;
           *)    curr="$curr$token"; token= ;;
           esac ;;
       PD) tmp=${token%%[\\\'\"]*}; token=${token#"$tmp"}; curr="$curr$tmp"
           case $token in
           \"*)  token=${token#\"}; nextop=PN ;;
-          '')   case $rest in
-                '') echo 'unmatched double quote' >&2; return 1 ;;
-                *) nextop=RD ;;
+          '')   nextop=RD
+                if [ -z "$rest" ]; then echo 'unmatched double quote' >&2; return 1; fi ;;
+          *[\\\']*)
+                tmp=${token%%[\\\']*}; token=${token#"$tmp"}; curr="$curr$tmp"
+                case $token in
+                \\*) token=${token#\\}; nextop=PS; PSret=PD ;;
+                \'*) token=${token#\'}; curr="$curr'\\''" ;;
                 esac ;;
-          *)    case $token in
-                *[\\\']*)
-                    tmp=${token%%[\\\']*}; token=${token#"$tmp"}; curr="$curr$tmp"
-                    case $token in
-                    \\*) token=${token#\\}; nextop=PS; PSret=PD ;;
-                    \'*) token=${token#\'}; curr="$curr'\\''" ;;
-                    esac ;;
-                *)  curr="$curr$token"; token= ;;
-                esac ;;
+          *)    curr="$curr$token"; token= ;;
           esac ;;
       *)  printf "BUG: quote: invalid nextop >%s<\n" "$nextop" >&2; return 1 ;;
       esac
