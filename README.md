@@ -44,8 +44,8 @@ The things you need to set/define in spec file:
 - `stop_opts` (array, optional)
 - `rm_opts` (array, optional)
 - `kill_opts` (array, optional)
-- `pre_start` (function, optional), first parameter set to `run` if container not exists or `start` if container already exists
-- `post_start` (function, optional), first parameter set to `run` if container not exists or `start` if container already exists
+- `pre_start` (function, optional), if container not exists it will called twice, first with argument `run`, after the container created it will called again with argument `created` after the container created successfuly. if container already exists and not running, the argument will be `start`. will not be called if container already running
+- `post_start` (function, optional), if container not exsits it will called with argument `run` after container running. if container already exists and not running, the argument will be `start`. will not be called if container already running
 - `pre_stop` (function, optional)
 - `post_stop` (function, optional)
 - `pre_restart` (function, optional)
