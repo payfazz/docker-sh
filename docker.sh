@@ -44,10 +44,11 @@ quote() (
           '') nextop=RS
               if [ -z "$rest" ]; then echo 'premature end of string' >&2; return 1; fi ;;
           $nl) nextop=$PSret ;;
+          \\) nextop=$PSret; curr="$curr$tmp" ;;
+          \") nextop=$PSret; curr="$curr$tmp" ;;
           \') nextop=$PSret
               if [ "$PSret" = PN ]; then curr="$curr'\\''"
               else curr="$curr\\'\\''"; fi ;;
-          \\) nextop=$PSret; curr="$curr$tmp" ;;
           *)  nextop=$PSret;
               if [ "$PSret" = PN ]; then curr="$curr$tmp"
               else curr="$curr\\$tmp"; fi ;;

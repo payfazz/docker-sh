@@ -42,6 +42,7 @@ quote_old() (
                   case $char in
                   $nl) : ;;
                   \\) current="$current$char" ;;
+                  \") current="$current$char" ;;
                   \') case $backslash_ret in
                       normal) current="$current'\\''" ;;
                       *)      current="$current\\'\\''" ;;
@@ -110,10 +111,11 @@ quote() (
           '') nextop=RS
               if [ -z "$rest" ]; then echo 'premature end of string' >&2; return 1; fi ;;
           $nl) nextop=$PSret ;;
+          \\) nextop=$PSret; curr="$curr$tmp" ;;
+          \") nextop=$PSret; curr="$curr$tmp" ;;
           \') nextop=$PSret
               if [ "$PSret" = PN ]; then curr="$curr'\\''"
               else curr="$curr\\'\\''"; fi ;;
-          \\) nextop=$PSret; curr="$curr$tmp" ;;
           *)  nextop=$PSret;
               if [ "$PSret" = PN ]; then curr="$curr$tmp"
               else curr="$curr\\$tmp"; fi ;;
@@ -249,3 +251,6 @@ data="
   -e PMA_HOST=db
 "
 dotest 17
+
+data="\"asdf\\\"aweg\""
+dotest 18
