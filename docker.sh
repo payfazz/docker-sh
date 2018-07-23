@@ -308,28 +308,31 @@ main() (
     update)
       if running "$name"; then
         pull=y
+        force=n
         for arg; do
           case $arg in
-          -n|--nopull)
-            pull=n
-            ;;
+          -n|--nopull) pull=n ;;
+          -f|--force) force=y ;;
           esac
         done
         [ "$pull" = "y" ] && docker pull "$image"
+        echo "Recreating container ..." >&2
         if [ -z "$file" ]; then
-          case $("$0" status) in
-          *different_*)
-            echo "Recreating container ..." >&2
+          if [ "$force" = "y" ]; then
             "$0" stop && "$0" rm && "$0" start
-            ;;
-          esac
+          else
+            case $("$0" status) in
+            *different_*) "$0" stop && "$0" rm && "$0" start ;;
+            esac
+          fi
         else
-          case $("$0" "$file" status) in
-          *different_*)
-            echo "Recreating container ..." >&2
+          if [ "$force" = "y" ]; then
             "$0" "$file" stop && "$0" "$file" rm && "$0" "$file" start
-            ;;
-          esac
+          else
+            case $("$0" "$file" status) in
+            *different_*) "$0" "$file" stop && "$0" "$file" rm && "$0" "$file" start ;;
+            esac
+          fi
         fi
         return $?
       else
