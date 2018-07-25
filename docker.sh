@@ -5,6 +5,7 @@
 # Note:
 # every code must compatible with POSIX shell
 
+# this quote function copied from /lib/quote.sh, DO NOT EDIT
 quote() (
   ret=; curr=; PSret=; tmp=; token=; no_proc=${no_proc:-n}; count=${count:--1};
   if ! ( count=$((count+0)) ) 2>/dev/null; then echo "count must be integer" >&2; return 1; fi
