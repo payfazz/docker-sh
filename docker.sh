@@ -314,6 +314,7 @@ main() (
           case $arg in
           -n|--nopull) pull=n ;;
           -f|--force) force=y ;;
+          -nf|-fn) pull=n; force=y ;;
           esac
         done
         [ "$pull" = "y" ] && docker pull "$image"
