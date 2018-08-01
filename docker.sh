@@ -18,7 +18,7 @@ quote() (
       R*) nextop="P${nextop#?}"
           token=${rest%%[!$SEP]*}; rest=${rest#"$token"}
           if [ -z "$token" ]; then token=${rest%%[$SEP]*}; rest=${rest#"$token"}; fi
-          [ -z "$token" -a -z "$rest" -a -z "$curr" ] && break ;;
+          [ -z "$token" ] && [ -z "$rest" ] && [ -z "$curr" ] && break ;;
       PN) case $token in
           *[$SEP]*|'')
               nextop=RN; tmp=
@@ -166,10 +166,10 @@ main() (
         eval "set -- $(no_proc=y quote "${stop_opts:-}" "$@")"
         tmp_opts=; i=1
         while [ $i -le $# ]; do
-          a=$(eval echo \${$i})
+          a=$(eval echo "\${$i}")
           case $a in
           -t|--time)
-            i=$((i+1)); a=$(eval echo \${$i})
+            i=$((i+1)); a=$(eval echo "\${$i}")
             tmp_opts="$tmp_opts'--time' $(no_proc=y count=1 quote "$a") "
             ;;
           esac
@@ -191,7 +191,7 @@ main() (
         eval "set -- $(no_proc=y quote "${rm_opts:-}" "$@")"
         tmp_opts=; i=1
         while [ $i -le $# ]; do
-          a=$(eval echo \${$i})
+          a=$(eval echo "\${$i}")
           case $a in
             -[fvl]|-[fvl][fvl]|-[fvl][fvl][fvl]) tmp_opts="$tmp_opts$a " ;;
             --force|--volumes|--link) tmp_opts="$tmp_opts$a " ;;
@@ -206,10 +206,10 @@ main() (
         eval "set -- $saved_run_cmds"
         init_net=; i=1
         while [ $i -le $# ]; do
-          a=$(eval echo \${$i})
+          a=$(eval echo "\${$i}")
           case $a in
           "'--network'")
-            i=$((i+1)); a=$(eval echo \${$i})
+            i=$((i+1)); a=$(eval echo "\${$i}")
             init_net=${a%"'"}
             init_net=${init_net#"'"}
             break
@@ -227,7 +227,7 @@ main() (
         [ $# = 0 ] && { echo 'no command to execute' >&2; return 1; }
         tmp_opts='--interactive '
         [ "$action" = exec_root ] && tmp_opts="$tmp_opts--user 0:0 "
-        [ -t 0 -a -t 1 -a -t 2 ] && tmp_opts="$tmp_opts--tty "
+        [ -t 0 ] && [ -t 1 ] && [ -t 2 ] && tmp_opts="$tmp_opts--tty "
         exec docker exec $tmp_opts "$name" "$@"
       else
         echo 'container is not running' >&2
@@ -240,10 +240,10 @@ main() (
         eval "set -- $(no_proc=y quote "${kill_opts:-}" "$@")"
         tmp_opts=; i=1
         while [ $i -le $# ]; do
-          a=$(eval echo \${$i})
+          a=$(eval echo "\${$i}")
           case $a in
           -s|--signal)
-            i=$((i+1)); a=$(eval echo \${$i})
+            i=$((i+1)); a=$(eval echo "\${$i}")
             tmp_opts="$tmp_opts'--signal' $(no_proc=y count=1 quote "$a") "
             ;;
           esac
@@ -385,7 +385,7 @@ if grep -qF 6245455020934bb2ad75ce52bbdc54b7 "$0" 2>/dev/null; then
   fi
   file=$1; shift
   [ "${file#/}" = "$file" ] && file=$PWD/$file
-  dir=$(cd "$(dirname "$file")"; pwd)
+  dir=$(cd "$(dirname "$file")" && pwd)
   file="$dir/$(basename "$file")"
   filename=$(basename "$file")
   dirname=$(basename "$dir")
