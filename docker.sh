@@ -339,6 +339,18 @@ main() (
       fi
       ;;
 
+    ip)
+      if running "$name"; then
+        docker inspect -f \
+          "{{index .NetworkSettings.Networks \"${net:-bridge}\" \"IPAddress\"}}" \
+          "$name";
+          return 0
+      else
+        echo 'container is not running' >&2
+        return 1
+      fi
+      ;;
+
     help)
       cat <<EOF >&2
 Available commands:
@@ -358,6 +370,7 @@ Available commands:
   show_cmds          Show the arguments to docker run
   show_running_cmds  Show the arguments to docker run in current running container
   pull               Pull the image
+  ip                 Show the container ip
   update             pull the image and recreate container
                      if status return different_image or different_opts
   help               Show this message
