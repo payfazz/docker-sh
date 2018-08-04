@@ -2,7 +2,7 @@
 
 quote() (
   ret=; curr=; PSret=; tmp=; token=; no_proc=${no_proc:-n}; count=${count:--1};
-  if ! ( count=$((count+0)) ) 2>/dev/null; then echo "count must be integer" >&2; return 1; fi
+  if [ "$count" != "$((count+0))" ]; then echo "count must be integer" >&2; return 1; fi
   case $no_proc in y|n) : ;; *) echo "no_proc must be y or n" >&2; return 1 ;; esac
   SEP=$(printf "\n \t"); nl=$(printf '\nx'); nl=${nl%x};
   for rest; do
@@ -12,7 +12,7 @@ quote() (
       R*) nextop="P${nextop#?}"
           token=${rest%%[!$SEP]*}; rest=${rest#"$token"}
           if [ -z "$token" ]; then token=${rest%%[$SEP]*}; rest=${rest#"$token"}; fi
-          [ -z "$token" -a -z "$rest" -a -z "$curr" ] && break ;;
+          if [ -z "$token" ] && [ -z "$rest" ] && [ -z "$curr" ]; then break; fi ;;
       PN) case $token in
           *[$SEP]*|'')
               nextop=RN; tmp=

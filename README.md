@@ -57,6 +57,8 @@ The things you need to set/define in spec file:
 - `post_restart` (function)
 - `pre_rm` (function)
 - `post_rm` (function)
+- `pre_pull` (function)
+- `post_pull` (function)
 
 Some variable will be defined before execute your spec file:
 - `dir` will set to directory contain spec file

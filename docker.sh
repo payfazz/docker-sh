@@ -8,7 +8,7 @@
 # this quote function copied from /lib/quote.sh, DO NOT EDIT
 quote() (
   ret=; curr=; PSret=; tmp=; token=; no_proc=${no_proc:-n}; count=${count:--1};
-  if ! ( count=$((count+0)) ) 2>/dev/null; then echo "count must be integer" >&2; return 1; fi
+  if [ "$count" != "$((count+0))" ]; then echo "count must be integer" >&2; return 1; fi
   case $no_proc in y|n) : ;; *) echo "no_proc must be y or n" >&2; return 1 ;; esac
   SEP=$(printf "\n \t"); nl=$(printf '\nx'); nl=${nl%x};
   for rest; do
@@ -18,7 +18,7 @@ quote() (
       R*) nextop="P${nextop#?}"
           token=${rest%%[!$SEP]*}; rest=${rest#"$token"}
           if [ -z "$token" ]; then token=${rest%%[$SEP]*}; rest=${rest#"$token"}; fi
-          [ -z "$token" ] && [ -z "$rest" ] && [ -z "$curr" ] && break ;;
+          if [ -z "$token" ] && [ -z "$rest" ] && [ -z "$curr" ]; then break; fi ;;
       PN) case $token in
           *[$SEP]*|'')
               nextop=RN; tmp=
@@ -136,6 +136,9 @@ _main() (
     start)
       if ! running "$name"; then
         if ! exists container "$name"; then
+          if [ -n "$file" ] && ! exists image "$image"; then
+            "$file" pull || return $?
+          fi
           _exec_if_fn_exists "pre_$action" run || return $?
           [ -n "${net:-}" ] && ! exists network "$net" && {
             docker network create --driver bridge --label kurnia_d_win.docker.autoremove=true "$net" >/dev/null \
@@ -294,7 +297,9 @@ _main() (
       ;;
 
     pull)
-      docker pull "$image"
+      _exec_if_fn_exists "pre_$action" || return $?
+      docker pull "$image" || return $?
+      _exec_if_fn_exists "post_$action" || return $?
       return $?
       ;;
 
@@ -309,8 +314,8 @@ _main() (
           -nf|-fn) pull=n; force=y ;;
           esac
         done
-        [ "$pull" = "y" ] && docker pull "$image"
         if [ -n "$file" ]; then
+          [ "$pull" = "y" ] && "$file" pull
           if [ "$force" = "y" ]; then
             echo "Recreating container ..." >&2
             "$0" "$file" stop && "$0" "$file" rm && "$0" "$file" start
