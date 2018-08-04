@@ -310,23 +310,20 @@ _main() (
           esac
         done
         [ "$pull" = "y" ] && docker pull "$image"
-        echo "Recreating container ..." >&2
-        if [ -z "$file" ]; then
+        if [ -n "$file" ]; then
           if [ "$force" = "y" ]; then
-            "$0" stop && "$0" rm && "$0" start
-          else
-            case $("$0" status) in
-            *different_*) "$0" stop && "$0" rm && "$0" start ;;
-            esac
-          fi
-        else
-          if [ "$force" = "y" ]; then
+            echo "Recreating container ..." >&2
             "$0" "$file" stop && "$0" "$file" rm && "$0" "$file" start
           else
             case $("$0" "$file" status) in
-            *different_*) "$0" "$file" stop && "$0" "$file" rm && "$0" "$file" start ;;
+            *different_*)
+              echo "Recreating container ..." >&2
+              "$0" "$file" stop && "$0" "$file" rm && "$0" "$file" start ;;
             esac
           fi
+        else
+          echo "update command not supported when docker.sh is sourced" >&2
+          return 1
         fi
         return $?
       else
