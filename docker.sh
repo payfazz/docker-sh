@@ -123,7 +123,7 @@ _exec_if_fn_exists() (
   return 0
 )
 
-_main() (
+_main() {
   action=help
   [ $# -gt 0 ] && { action=$1; shift; }
   constructed_run_cmds=$(_construct_run_cmds) || return $?
@@ -136,26 +136,28 @@ _main() (
     start)
       if ! running "$name"; then
         if ! exists container "$name"; then
-          if [ -n "$file" ] && ! exists image "$image"; then
-            "$file" pull || return $?
+          if ! exists image "$image"; then
+            ( _main pull; ) || return $?
           fi
           _exec_if_fn_exists "pre_$action" run || return $?
-          [ -n "${net:-}" ] && ! exists network "$net" && {
+          if [ -n "${net:-}" ] && ! exists network "$net"; then
             docker network create --driver bridge --label kurnia_d_win.docker.autoremove=true "$net" >/dev/null \
-            || { printf 'cannot create network "%s"\n' "$net" >&2; return 1; }
-          }
+              || return $?
+          fi
           eval "set -- $constructed_run_cmds"
           docker create --label "kurnia_d_win.docker.run_opts=$constructed_run_cmds" "$@" >/dev/null || return $?
           _exec_if_fn_exists "pre_$action" created || return $?
           docker start "$name" >/dev/null || return $?
-          _exec_if_fn_exists "post_$action" run
+          _exec_if_fn_exists "post_$action" run || return $?
+          return 0
         else
           _exec_if_fn_exists "pre_$action" start || return $?
           docker start "$name" >/dev/null || return $?
-          _exec_if_fn_exists "post_$action" start
+          _exec_if_fn_exists "post_$action" start || return $?
+          return 0
         fi
       fi
-      return $?
+      return 0
       ;;
 
     stop|restart)
@@ -175,12 +177,13 @@ _main() (
         _exec_if_fn_exists "pre_$action" || return $?
         eval "set -- $tmp_opts"
         docker "$action" "$@" "$name" >/dev/null || return $?
-        _exec_if_fn_exists "post_$action"
+        _exec_if_fn_exists "post_$action" || return $?
+        return 0
       elif [ "$action" = restart ]; then
         echo 'container is not running' >&2
         return 1
       fi
-      return $?
+      return 0
       ;;
 
     rm)
@@ -218,7 +221,7 @@ _main() (
           docker network rm "$init_net" >/dev/null 2>&1 || :
         fi
       fi
-      return $?
+      return 0
       ;;
 
     exec|exec_root)
@@ -228,10 +231,12 @@ _main() (
         [ "$action" = exec_root ] && tmp_opts="$tmp_opts--user 0:0 "
         [ -t 0 ] && [ -t 1 ] && [ -t 2 ] && tmp_opts="$tmp_opts--tty "
         exec docker exec $tmp_opts "$name" "$@"
+        return 1
       else
         echo 'container is not running' >&2
+        return 1
       fi
-      return 1
+      return 0
       ;;
 
     kill)
@@ -249,22 +254,24 @@ _main() (
           i=$((i+1))
         done
         eval "set -- $tmp_opts"
-        docker kill "$@" "$name" >/dev/null
+        docker kill "$@" "$name" >/dev/null || return $?
+        return 0
       else
         echo 'container is not running' >&2
         return 1
       fi
-      return $?
+      return 0
       ;;
 
     logs|port)
       if exists container "$name"; then
-        docker "$action" "$name" "$@"
+        exec docker "$action" "$name" "$@"
+        return 1
       else
         echo "container not exists" >&2
         return 1
       fi
-      return $?
+      return 0
       ;;
 
     status)
@@ -288,25 +295,25 @@ _main() (
 
     show_running_cmds)
       if exists container "$name"; then
-        docker inspect -f '{{index .Config.Labels "kurnia_d_win.docker.run_opts"}}' "$name" 2>/dev/null;
+        exec docker inspect -f '{{index .Config.Labels "kurnia_d_win.docker.run_opts"}}' "$name" 2>/dev/null;
+        return 1
       else
         echo "container not exists" >&2
         return 1
       fi
-      return $?
+      return 0
       ;;
 
     pull)
       _exec_if_fn_exists "pre_$action" || return $?
       docker pull "$image" || return $?
       _exec_if_fn_exists "post_$action" || return $?
-      return $?
+      return 0
       ;;
 
     update)
       if running "$name"; then
-        pull=y
-        force=n
+        pull=y; force=n
         for arg; do
           case $arg in
           -n|--nopull) pull=n ;;
@@ -314,39 +321,40 @@ _main() (
           -nf|-fn) pull=n; force=y ;;
           esac
         done
-        if [ -n "$file" ]; then
-          [ "$pull" = "y" ] && "$file" pull
-          if [ "$force" = "y" ]; then
-            echo "Recreating container ..." >&2
-            "$0" "$file" stop && "$0" "$file" rm && "$0" "$file" start
-          else
-            case $("$0" "$file" status) in
-            *different_*)
-              echo "Recreating container ..." >&2
-              "$0" "$file" stop && "$0" "$file" rm && "$0" "$file" start ;;
-            esac
-          fi
-        else
-          echo "update command not supported when docker.sh is sourced" >&2
-          return 1
+        if [ "$pull" = "y" ]; then
+          ( _main pull; ) || return $?
         fi
-        return $?
+        if [ "$force" = "y" ]; then
+          echo "Recreating container ..." >&2
+          { ( _main stop; ) && ( _main rm; ) && ( _main start; ); } || return $?
+          return 0
+        else
+          case $(_main status) in
+          *different_*)
+            echo "Recreating container ..." >&2
+            { ( _main stop; ) && ( _main rm; ) && ( _main start; ); } || return $?
+            return 0 ;;
+          esac
+        fi
+        return 0
       else
         echo 'container is not running' >&2
         return 1
       fi
+      return 0
       ;;
 
     ip)
       if running "$name"; then
-        docker inspect -f \
+        exec docker inspect -f \
           "{{index .NetworkSettings.Networks \"${net:-bridge}\" \"IPAddress\"}}" \
-          "$name";
-          return 0
+          "$name"
+        return 1
       else
         echo 'container is not running' >&2
         return 1
       fi
+      return 0
       ;;
 
     help)
@@ -379,15 +387,16 @@ EOF
   *)
     action="command_$action"
     if type "$action" 2>/dev/null | grep -q -F function; then
-      "$action" "$@"
+      "$action" "$@" || return $?
+      return 0
     else
       printf 'function "%s" not exists\n' "$action" >&2
       return 1
     fi
-    return $?
+    return 0
     ;;
   esac
-)
+}
 
 # if this file is not sourced with dot (.) command
 if grep -qF 6245455020934bb2ad75ce52bbdc54b7 "$0" 2>/dev/null; then
