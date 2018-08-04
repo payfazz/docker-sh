@@ -92,7 +92,7 @@ running() {
   [ "$(docker inspect --type container -f '{{.State.Running}}' "$1" 2>/dev/null)" = true ]
 }
 
-construct_run_cmds() (
+_construct_run_cmds() (
   ret="$(quote "${opts:-}") " || { echo 'cannot process "opts"' >&2; return 1; }
   eval "set -- $ret"
   for arg; do
@@ -112,13 +112,7 @@ construct_run_cmds() (
   printf %s "$ret"
 )
 
-gc_network() {
-  [ "$(docker network inspect -f '{{index .Labels "kurnia_d_win.docker.autoremove"}}{{.Containers|len}}' "$1" 2>/dev/null)" = true0 ] \
-  && docker network rm "$1" >/dev/null 2>&1
-  return 0
-}
-
-exec_fn_opt() (
+_exec_if_fn_exists() (
   if type "$1" 2>/dev/null | grep -q -F function; then
     "$@" || {
       tmp=$?
@@ -129,10 +123,10 @@ exec_fn_opt() (
   return 0
 )
 
-main() (
+_main() (
   action=help
   [ $# -gt 0 ] && { action=$1; shift; }
-  constructed_run_cmds=$(construct_run_cmds) || return $?
+  constructed_run_cmds=$(_construct_run_cmds) || return $?
   case ${action:-} in
     name) echo "$name"; return 0 ;;
     image) echo "$image"; return 0 ;;
@@ -142,20 +136,20 @@ main() (
     start)
       if ! running "$name"; then
         if ! exists container "$name"; then
-          exec_fn_opt "pre_$action" run || return $?
+          _exec_if_fn_exists "pre_$action" run || return $?
           [ -n "${net:-}" ] && ! exists network "$net" && {
             docker network create --driver bridge --label kurnia_d_win.docker.autoremove=true "$net" >/dev/null \
             || { printf 'cannot create network "%s"\n' "$net" >&2; return 1; }
           }
           eval "set -- $constructed_run_cmds"
           docker create --label "kurnia_d_win.docker.run_opts=$constructed_run_cmds" "$@" >/dev/null || return $?
-          exec_fn_opt "pre_$action" created || return $?
+          _exec_if_fn_exists "pre_$action" created || return $?
           docker start "$name" >/dev/null || return $?
-          exec_fn_opt "post_$action" run
+          _exec_if_fn_exists "post_$action" run
         else
-          exec_fn_opt "pre_$action" start || return $?
+          _exec_if_fn_exists "pre_$action" start || return $?
           docker start "$name" >/dev/null || return $?
-          exec_fn_opt "post_$action" start
+          _exec_if_fn_exists "post_$action" start
         fi
       fi
       return $?
@@ -175,10 +169,10 @@ main() (
           esac
           i=$((i+1))
         done
-        exec_fn_opt "pre_$action" || return $?
+        _exec_if_fn_exists "pre_$action" || return $?
         eval "set -- $tmp_opts"
         docker "$action" "$@" "$name" >/dev/null || return $?
-        exec_fn_opt "post_$action"
+        _exec_if_fn_exists "post_$action"
       elif [ "$action" = restart ]; then
         echo 'container is not running' >&2
         return 1
@@ -200,9 +194,9 @@ main() (
         done
         saved_run_cmds=$(docker inspect -f '{{index .Config.Labels "kurnia_d_win.docker.run_opts"}}' "$name" 2>/dev/null)
         saved_run_cmds=$(no_proc=y quote "$saved_run_cmds")
-        exec_fn_opt "pre_$action" || return $?
+        _exec_if_fn_exists "pre_$action" || return $?
         docker rm $tmp_opts "$name" >/dev/null || return $?
-        exec_fn_opt "post_$action" || return $?
+        _exec_if_fn_exists "post_$action" || return $?
         eval "set -- $saved_run_cmds"
         init_net=; i=1
         while [ $i -le $# ]; do
@@ -217,7 +211,9 @@ main() (
           esac
           i=$((i+1))
         done
-        [ -n "$init_net" ] && gc_network "$init_net" || :
+        if [ "$(docker network inspect -f '{{index .Labels "kurnia_d_win.docker.autoremove"}}{{.Containers|len}}' "$init_net" 2>/dev/null)" = true0 ]; then
+          docker network rm "$init_net" >/dev/null 2>&1 || :
+        fi
       fi
       return $?
       ;;
@@ -391,6 +387,7 @@ EOF
   esac
 )
 
+# if this file is not sourced with dot (.) command
 if grep -qF 6245455020934bb2ad75ce52bbdc54b7 "$0" 2>/dev/null; then
   if ! [ -r "${1:-}" ]; then
     printf 'Usage: %s <file> <command> [args...]\n' "$0" >&2
@@ -407,5 +404,5 @@ if grep -qF 6245455020934bb2ad75ce52bbdc54b7 "$0" 2>/dev/null; then
   if [ -z "$name" ]; then
     name=$dirname-$dirsum
   fi
-  main "$@"
+  _main "$@"
 fi

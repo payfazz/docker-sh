@@ -1,14 +1,11 @@
 #!/usr/bin/env docker.sh
 
-vol_opts="
-  -v '$dir/data:/pgadmin'
-"
-
 image=thajeztah/pgadmin4
 net=net0
+opts_vol="-v '$dir/data:/pgadmin'"
 opts="
   --restart always
-  $vol_opts
+  $opts_vol
   -p 5050:5050
 "
 
@@ -16,7 +13,7 @@ pre_start() (
   "$dir/../postgres/app" start || { echo 'failed to start postgres'; return 1; }
   if [ "${1:-}" = run ]; then
     # we need to chown the dir
-    tmp=$(quote "$vol_opts") || return 1
+    tmp=$(quote "$opts_vol") || return 1
     eval "set -- $tmp"
     docker run -it --rm \
       "$@" \

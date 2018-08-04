@@ -4,7 +4,7 @@ This is simple POSIX script for managing docker container, just like `docker-com
 
 Because this is POSIX shell script, the possibility is limitless.
 
-This approach is inspired by openrc, PKGBUILD, and APKBUILD spec file.
+This approach is inspired by openrc from gentoo, ebuild from gentoo, PKGBUILD from archlinux, and APKBUILD from alpine.
 
 This script is written with POSIX shell standard, so it will work with `bash`, `ash`, `dash` or any shell that follow POSIX standard.
 
@@ -24,7 +24,7 @@ or to custom location, e.g. /opt/bin/docker.sh
 
 Create spec file (`nginx`)
 ```sh
-#!/usr/env/bin docker.sh
+#!/usr/bin/env docker.sh
 
 name=test_nginx
 image=nginx:alpine
@@ -67,11 +67,13 @@ Some variable will be defined before execute your spec file:
 
 if `name` is not specified, it will be set to `$dirname-$dirsum`.
 
+NOTE: Do not modify these var inside hook function.
+
 NOTE: if you messed up in `opts` variable, it will likely fail to start the container. `show_cmds` command will give you final result.
 
 
 #### `quote` function
-because POSIX shell does't support array (actually It doest provide ONE array, the args, `"$@"`), I provide `quote` function utility, to convert string to quoted one so you can use it in `eval` and `set` command to modify `"$@"` safely
+because POSIX shell does't support array (actually It doest provide ONE array, the args, `"$@"`), We provide `quote` function utility, to convert string to quoted one so you can use it in `eval` and `set` command to modify `"$@"` safely
 ```sh
 old_args=$(quote "$@")
 eval "set -- $(quote "a b 'c d' \"e'f\"")"
@@ -86,7 +88,47 @@ will print:
 >e'f<
 ```
 
-read `docker.sh` file if you need more information
+#### `exists` function
+This helper function to check existance of volume, image, container, network.
+The function will exit with 0 if exists, or non-zero otherwise.
+
+usage `exists <type> <name>`
+
+example
+```sh
+if ! exists network my-network; then
+  # do something
+fi
+```
+
+#### `running` function
+This helper function to check if container is running or not.
+The function will exit with 0 if the container is running, or non-zero otherwise.
+
+example
+```sh
+if running my-container; then
+  # do something
+fi
+```
+
+#### arbitary command
+You can add arbitrary command by defining function `command_<name>`, for example adding `reload` command to nginx spec file.
+
+Create spec file (`nginx`)
+```sh
+#!/usr/bin/env docker.sh
+
+name=test_nginx
+image=nginx:alpine
+opts="
+  -p 8080:80
+"
+
+command_reload() (
+  "$file" exec nginx -s reload
+)
+```
 
 
 ## Example
@@ -98,6 +140,7 @@ content of `postgres/app`:
 image=postgres:9-alpine
 net=net0
 opts="
+  --network-alias postgres
   --restart always
   -v '$dir/data:/var/lib/postgresql/data'
   -p 5432:5432
@@ -108,15 +151,12 @@ content of `pgadmin/app`:
 ```sh
 #!/usr/bin/env docker.sh
 
-vol_opts="
-  -v '$dir/data:/pgadmin'
-"
-
 image=thajeztah/pgadmin4
 net=net0
+opts_vol="-v '$dir/data:/pgadmin'"
 opts="
   --restart always
-  $vol_opts
+  $opts_vol
   -p 5050:5050
 "
 
@@ -124,7 +164,7 @@ pre_start() (
   "$dir/../postgres/app" start || { echo 'failed to start postgres'; return 1; }
   if [ "${1:-}" = run ]; then
     # we need to chown the dir
-    tmp=$(quote "$vol_opts") || return 1
+    tmp=$(quote "$opts_vol") || return 1
     eval "set -- $tmp"
     docker run -it --rm \
       "$@" \
@@ -142,3 +182,6 @@ Don't forget to change permission so you can execute the script
 now, you can run them with just on command
 
     pgadmin/app start
+
+## TODO
+- Automated testing
