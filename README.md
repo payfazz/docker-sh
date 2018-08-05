@@ -67,7 +67,7 @@ Some variable will be defined before execute your spec file:
 - `filename` will set to name of spec file (name only, without path)
 - `dirsum` checksum of `dir`, you should use this to avoid name collision
 
-if `name` is not specified, it will be set to `$dirname-$dirsum`.
+if `name` is not specified, it will be set to `$dirname-$filename-$dirsum`.
 
 NOTE: Do not modify these var inside hook function.
 
