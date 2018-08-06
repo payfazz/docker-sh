@@ -33,7 +33,7 @@ opts="
 "
 ```
 
-then make it executable by `chmod 755 nginx`, after that, you can run this file, `./nginx help` will give you more info.
+then make it executable by `chmod 755 nginx`, after that, you can execute this file, `./nginx help` will give you more info. (see Available Command below)
 
 #### Variable and hook function.
 Variable:
@@ -158,6 +158,73 @@ command_reload() (
 
 `./nginx reload` will be available.
 
+
+
+## Available command
+
+### `start`
+Start the container if not started yet. The container will be started based on `opts` and `args`. See also `show_cmds`
+
+### `stop`
+Stop the container if not stopped. The container will be stoped based on `stop_opts` and/or any argument passed to this command. Only `-t`/`--time` are supported for now.
+
+### `restart`
+Restart the container. The container will be stoped based on `stop_opts` and/or any argument passed to this command. Only `-t`/`--time` are supported for now.
+
+### `rm`
+Remove the container if exists. The container will be removed based on `rm_opts` and/or any argument passed to this. Only `-f`/`--force`, `-v`/`--volume`, `-l`/`--link` are supported for now.
+Network defined on `net` will be removed if this container is the last container attach to that network.
+
+### `exec`
+Exec command inside container.
+
+### `exec_root`
+Exec command inside container as root.
+
+### `kill`
+Kill the container. The container will be stoped based on `kill_opts` and/or any argument passed to this command. Only `-s`/`--signal` are supported for now.
+
+### `logs`
+Show logs of the container. Any argument passed to this command will used by underlying docker program.
+
+### `port`
+Show port mapping of the container. Any argument passed to this command will used by underlying docker program.
+
+### `status`
+Show container status, possibel output are any combination (in one line) of:
+- `different_opts`
+- `different_image`
+- `running`
+- `not_running`
+- `no_container`
+
+### `name`
+Print `name`
+
+### `image`
+Print `image`
+
+### `net`
+Print `net`
+
+### `show_cmds`
+Show the final constructed arguments for underlying docker program.
+
+### `show_running_cmds`
+Show the arguments for running current container.
+
+### `pull`
+Pull image specified in `image`.
+
+### `ip`
+Show ip address of the container, that attach to network `net`.
+
+### `update`
+Pull image specified in `image` (`-n`/`nopull` will skip this step).
+Stop, remove, and start the container if running container using outdated image or `show_cmds` and `show_running_cmds` have different value or `-f`/`--force` specified to this command.
+
+### `help`
+Help
 
 ## Example
 
