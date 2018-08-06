@@ -435,7 +435,7 @@ if grep -qF 6245455020934bb2ad75ce52bbdc54b7 "$0" 2>/dev/null; then
   dirname=$(basename "$dir")
   dirsum=$(printf %s "$dir" | cksum | tr -d ' ')
   . "$file" || exit 1
-  if [ -z "$name" ]; then
+  if [ -z "${name:-}" ]; then
     name="$dirname-$filename-$dirsum"
   fi
   _main "$@"

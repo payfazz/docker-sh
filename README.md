@@ -56,15 +56,8 @@ Variable:
 
 
 Hook function:
-- `pre_start`,
-  If container not exists it will called twice, first `pre_start run` before the container created,
-  second `pre_start created` after the container created but before the container started.
-  If container already exists but not running, `pre_start start` will be called.
-  It will not be called if container already running.
-- `post_start`,
-  If container not exsits `post_start run` will be called after container running.
-  If container already exists but not running,`post_start start` will be called.
-  It will not be called if container already running.
+- `pre_start`, see `start` command below.
+- `post_start`, see `start` command below.
 - `pre_stop`
 - `post_stop`
 - `pre_restart`
@@ -173,11 +166,25 @@ command_reload() (
 `./nginx reload` will be available.
 
 
-
 ## Available command
 
 ### `start`
-Start the container if not started yet. The container will be started based on `opts` and `args`. See also `show_cmds`
+Start the container if not started yet. The container will be started based on `opts` and `args`. See also `show_cmds`.
+
+`pre_start` and `post_start` hook function will be called with different argument. That argument depend on following:
+
+- If container not exists yet:
+  - `pre_start run`
+  - `docker create ...`
+  - `pre_start created`.
+  - `docker start ...`.
+  - `post_start run`.
+
+- If container already exists, but not started yet:
+  - `pre_start start`
+  - `docker start ...`
+  - `post_start start`
+
 
 ### `stop`
 Stop the container if not stopped. The container will be stoped based on `stop_opts` and/or any argument passed to this command. Only `-t`/`--time` are supported for now.
