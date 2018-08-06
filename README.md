@@ -51,6 +51,8 @@ Variable:
 - `must_local`,
   If set to `y`, it will ensure docker daemon is running on local machine,
   useful if you want to use bind-mount.
+- `create_only`,
+  If set to `y`, `start` command will only create the container, but won't run it.
 
 *NOTE*: `opts`, `args`, `stop_opts`, `rm_opts`, `kill_opts` are processed with `quote` function (see below).
 
@@ -176,9 +178,9 @@ Start the container if not started yet. The container will be started based on `
 - If container not exists yet:
   - `pre_start run`
   - `docker create ...`
-  - `pre_start created`.
-  - `docker start ...`.
-  - `post_start run`.
+  - `pre_start created`
+  - `docker start ...`
+  - `post_start run`
 
 - If container already exists, but not started yet:
   - `pre_start start`

@@ -192,10 +192,12 @@ _main() {
           eval "set -- $constructed_run_cmds"
           docker create --label "kurnia_d_win.docker.run_opts=$constructed_run_cmds" "$@" >/dev/null || return $?
           _exec_if_fn_exists "pre_$action" created || return $?
+          [ "${create_only:-}" = "y" ] && return 0
           docker start "$name" >/dev/null || return $?
           _exec_if_fn_exists "post_$action" run || return $?
           return 0
         else
+          [ "${create_only:-}" = "y" ] && return 0
           _exec_if_fn_exists "pre_$action" start || return $?
           docker start "$name" >/dev/null || return $?
           _exec_if_fn_exists "post_$action" start || return $?
