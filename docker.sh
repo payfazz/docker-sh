@@ -123,6 +123,22 @@ _exec_if_fn_exists() (
   return 0
 )
 
+_assert_local_docker() (
+  str=$(tr -cd 0-9a-zA-Z < /dev/urandom | head -c 8)
+  file=$(tr -cd 0-9a-zA-Z < /dev/urandom | head -c 8)
+  [ -z "${dir:-}" ] && dir=/tmp
+  file="$dir/$file"
+  printf %s "$str" > "$file"
+  str2=$(docker run \
+    --rm --entrypoint sh \
+    --pid host --net host --uts host --ipc=host \
+    -v $file:/tmp/test-file:ro \
+    busybox -c "cat /tmp/test-file" 2>/dev/null
+  ) || :
+  rm -f "$file"
+  [ "$str" = "$str2" ]
+)
+
 _main() {
   action=help
   [ $# -gt 0 ] && { action=$1; shift; }
@@ -136,6 +152,12 @@ _main() {
     start)
       if ! running "$name"; then
         if ! exists container "$name"; then
+          if [ "${must_local:-}" = "y" ]; then
+            _assert_local_docker || {
+              echo "docker daemon is not on local machine." >&2
+              return 1
+            }
+          fi
           if ! exists image "$image"; then
             ( _main pull; ) || return $?
           fi

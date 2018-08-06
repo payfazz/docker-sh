@@ -48,6 +48,9 @@ Variable:
 - `stop_opts`
 - `rm_opts`
 - `kill_opts`
+- `must_local`,
+  If set to `y`, it will ensure docker daemon is running on local machine,
+  useful if you want to use bind-mount.
 
 *NOTE*: `opts`, `args`, `stop_opts`, `rm_opts`, `kill_opts` are processed with `quote` function (see below).
 
@@ -162,6 +165,7 @@ content of `postgres/app`:
 ```sh
 #!/usr/bin/env docker.sh
 
+must_local=y
 image=postgres:9-alpine
 net=net0
 opts="
@@ -176,6 +180,7 @@ content of `pgadmin/app`:
 ```sh
 #!/usr/bin/env docker.sh
 
+must_local=y
 image=thajeztah/pgadmin4
 net=net0
 opts_vol="-v '$dir/data:/pgadmin'"

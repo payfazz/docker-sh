@@ -1,5 +1,6 @@
 #!/usr/bin/env docker.sh
 
+must_local=y
 image=postgres:9-alpine
 net=net0
 opts="
