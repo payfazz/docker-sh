@@ -5,12 +5,35 @@
 # Note:
 # every code must compatible with POSIX shell
 
+_help_str="Available commands:
+  start              Start the container
+  stop               Stop the container
+  restart            Restart the container
+  rm                 Remove the container
+  exec               Exec program inside the container
+  exec_root          Exec program inside the container (as root)
+  kill               Force kill the container
+  logs               Show the log of the container
+  port               Show port forwarding
+  status             Show status of the container
+  name               Show the name of the container
+  image              Show the image of the container
+  net                Show the primary network of the container
+  show_cmds          Show the arguments to docker run
+  show_running_cmds  Show the arguments to docker run in current running container
+  pull               Pull the image
+  ip                 Show the container ip
+  update             pull the image and recreate container
+                     if status return different_image or different_opts
+  help               Show this message
+"
+
 # this quote function copied from $REPO/lib/quote.sh, DO NOT EDIT
 quote() (
   ret=; curr=; PSret=; tmp=; token=; no_proc=${no_proc:-n}; count=${count:--1};
   if [ "$count" != "$((count+0))" ]; then echo "count must be integer" >&2; return 1; fi
   case $no_proc in y|n) : ;; *) echo "no_proc must be y or n" >&2; return 1 ;; esac
-  SEP=$(printf "\n \t"); nl=$(printf '\nx'); nl=${nl%x};
+  SEP=$(printf '\n \t'); nl=$(printf '\nx'); nl=${nl%x};
   for rest; do
     nextop=RN
     while [ "$count" != 0 ]; do
@@ -74,7 +97,7 @@ quote() (
                 esac ;;
           *)    curr="$curr$token"; token= ;;
           esac ;;
-      *)  printf "BUG: quote: invalid nextop >%s<\n" "$nextop" >&2; return 1 ;;
+      *)  printf 'BUG: quote: invalid nextop >%s<\n' "$nextop" >&2; return 1 ;;
       esac
     done
   done
@@ -132,7 +155,7 @@ _assert_local_docker() (
   str2=$(docker run \
     --rm --entrypoint sh \
     --pid host --net host --uts host --ipc=host \
-    -v $file:/tmp/test-file:ro \
+    -v "$file:/tmp/test-file:ro" \
     busybox -c "cat /tmp/test-file" 2>/dev/null
   ) || :
   rm -f "$file"
@@ -380,43 +403,21 @@ _main() {
       ;;
 
     help)
-      cat <<EOF >&2
-Available commands:
-  start              Start the container
-  stop               Stop the container
-  restart            Restart the container
-  rm                 Remove the container
-  exec               Exec program inside the container
-  exec_root          Exec program inside the container (as root)
-  kill               Force kill the container
-  logs               Show the log of the container
-  port               Show port forwarding
-  status             Show status of the container
-  name               Show the name of the container
-  image              Show the image of the container
-  net                Show the primary network of the container
-  show_cmds          Show the arguments to docker run
-  show_running_cmds  Show the arguments to docker run in current running container
-  pull               Pull the image
-  ip                 Show the container ip
-  update             pull the image and recreate container
-                     if status return different_image or different_opts
-  help               Show this message
-EOF
+      echo "$_help_str"
       return 1
       ;;
 
-  *)
-    action="command_$action"
-    if type "$action" 2>/dev/null | grep -q -F function; then
-      ( "$action" "$@" ) || return $?
+    *)
+      action="command_$action"
+      if type "$action" 2>/dev/null | grep -q -F function; then
+        ( "$action" "$@" ) || return $?
+        return 0
+      else
+        printf 'function "%s" not exists\n' "$action" >&2
+        return 1
+      fi
       return 0
-    else
-      printf 'function "%s" not exists\n' "$action" >&2
-      return 1
-    fi
-    return 0
-    ;;
+      ;;
   esac
 }
 

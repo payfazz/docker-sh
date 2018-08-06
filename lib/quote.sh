@@ -4,7 +4,7 @@ quote() (
   ret=; curr=; PSret=; tmp=; token=; no_proc=${no_proc:-n}; count=${count:--1};
   if [ "$count" != "$((count+0))" ]; then echo "count must be integer" >&2; return 1; fi
   case $no_proc in y|n) : ;; *) echo "no_proc must be y or n" >&2; return 1 ;; esac
-  SEP=$(printf "\n \t"); nl=$(printf '\nx'); nl=${nl%x};
+  SEP=$(printf '\n \t'); nl=$(printf '\nx'); nl=${nl%x};
   for rest; do
     nextop=RN
     while [ "$count" != 0 ]; do
@@ -68,7 +68,7 @@ quote() (
                 esac ;;
           *)    curr="$curr$token"; token= ;;
           esac ;;
-      *)  printf "BUG: quote: invalid nextop >%s<\n" "$nextop" >&2; return 1 ;;
+      *)  printf 'BUG: quote: invalid nextop >%s<\n' "$nextop" >&2; return 1 ;;
       esac
     done
   done
