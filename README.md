@@ -93,8 +93,11 @@ If `name` is not specified in the spec file, it will be `$dirname-$filename-$dir
 #### `quote` function.
 Because POSIX shell does't support array (actually tt does provide ONE array, the args, `"$@"`),
 We provide `quote` function utility, to safely convert string to quoted one so you can use it in `eval` and `set` command to modify `"$@"`.
+
+This function is also useful to serialize array into string.
+
 ```sh
-old_args=$(quote "$@")
+old_args=$(no_proc=y quote "$@")
 eval "set -- $(quote "a b 'c d' \"e'f\"")"
 for x; do echo ">$x<"; done
 # restore old args
@@ -106,6 +109,17 @@ will print:
 >b<
 >c d<
 >e'f<
+```
+
+to set max count of `quote`, set `count` env, example:
+```sh
+count=2 quote a b c d # will print: 'a' 'b'
+```
+
+to disable special chars, set `no_proc` env to `y`, example:
+```sh
+quote a "'b" c d # will error with message: unmatched single quote
+no_proc=y quote a "'b" c d # will print: 'a' ''\''b' 'c' 'd'
 ```
 
 #### `exists` function.
