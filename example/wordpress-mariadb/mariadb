@@ -1,0 +1,12 @@
+#!/usr/bin/env docker.sh
+
+must_local=y
+name=$filename-$dirsum
+image=mariadb:latest
+net=net-$dirsum
+opts="
+  -v '$dir/db-data:/var/lib/mysql'
+  --network-alias db
+
+  -e MYSQL_ROOT_PASSWORD=password
+"

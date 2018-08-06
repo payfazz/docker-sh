@@ -1,0 +1,17 @@
+#!/usr/bin/env docker.sh
+
+must_local=y
+name=$filename-$dirsum
+image=wordpress:latest
+net=net-$dirsum
+opts="
+  -p 8080:80
+  -v '$dir/wp-root:/var/www/html'
+
+  -e WORDPRESS_DB_HOST=db
+  -e WORDPRESS_DB_PASSWORD=password
+"
+
+pre_start() {
+  "$dir/mariadb" start
+}
