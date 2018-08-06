@@ -251,57 +251,42 @@ Help
 
 ## Example
 
-content of `postgres/app`:
-```sh
-#!/usr/bin/env docker.sh
+See files inside example directory.
 
-must_local=y
-image=postgres:9-alpine
-net=net0
-opts="
-  --network-alias postgres
-  --restart always
-  -v '$dir/data:/var/lib/postgresql/data'
-  -p 5432:5432
-"
-```
+### postgres
 
-content of `pgadmin/app`:
-```sh
-#!/usr/bin/env docker.sh
+to start postgres, run
 
-must_local=y
-image=thajeztah/pgadmin4
-net=net0
-opts_vol="-v '$dir/data:/pgadmin'"
-opts="
-  --restart always
-  $opts_vol
-  -p 5050:5050
-"
+    ./example/postgres/app start
 
-pre_start() (
-  "$dir/../postgres/app" start || { echo 'failed to start postgres'; return 1; }
-  if [ "${1:-}" = run ]; then
-    # we need to chown the dir
-    tmp=$(quote "$opts_vol") || return 1
-    eval "set -- $tmp"
-    docker run -it --rm \
-      "$@" \
-      -u 0:0 --entrypoint /bin/sh \
-      "$image" -c 'chown pgadmin:pgadmin /pgadmin'
-  fi
-)
-```
-*NOTE*: Because we use bind-mount, `pgadmin` will be owned by root. Here I chown the directory before container start.
+postgres will exposed on port 5432.
 
-Change the permission so you can execute the script
 
-    chmod 755 postgres/app pgadmin/app
+### pgadmin4
 
-now, you can run them with just one command
+to start pgadmin4, run
 
-    pgadmin/app start
+    ./example/pgadmin/app start
+
+pgadmin4 will be exposed on port 5050.
+
+
+### wordpress
+
+to start wordpress, run
+
+    ./example/wordpress-mariadb/wordpress
+
+wordpress will be exposed on port 8080.
+
+
+### phpmyadmin
+
+to start phpmyadmin, run
+
+    ./example/pgadmin/app start
+
+phpmyadmin will be exposed on port 8080.
 
 ## TODO
 - Automated testing
