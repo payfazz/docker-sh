@@ -12,7 +12,7 @@ opts="
 "
 ```
 
-then make it executable by `chmod 755 nginx`, after that, you can execute this file, `./nginx help` will give you more info. (see Available Command below)
+then make it executable by `chmod 755 nginx`, after that, you can execute this file, `./nginx help` will give you more info. (see *Available Command* below)
 
 #### Variable and hook function.
 Variable:
@@ -48,7 +48,7 @@ Hook function:
 - `pre_pull`
 - `post_pull`
 
-Some variable will be defined before execute your spec file:
+Some variable will be defined before execute your spec file (do not edit these var):
 - `$dir`,
   The directory path contain the spec file.
 - `$file`,
@@ -58,17 +58,15 @@ Some variable will be defined before execute your spec file:
 - `$filename`,
   The name of the spec file (name only, without path).
 - `$dirsum`,
-  The checksum of `$dir`. Useful for avoiding name collision.
+  The checksum of `$dir`. Useful for avoiding name collision (see example for usage).
 
 If `name` is not specified in the spec file, it will be `$dirname-$filename-$dirsum`.
 
-*NOTE*: You can use`show_cmds` to see the final result of constructed argument.
+*NOTE*: You can use `show_cmds` to see the final result of constructed argument.
 
 #### `quote` function.
-Because POSIX shell does't support array (actually it does provide ONE array, the args, `"$@"`),
-We provide `quote` function utility, to safely convert string to quoted one so you can use it in `eval` and `set` command to modify `"$@"`.
-
-This function is also useful to serialize array into string.
+Because POSIX shell does't support array,
+we provide `quote` function utility to serialize array so you can use it safely in `eval` and `set` to change `"$@"`.
 
 example usage:
 
@@ -141,13 +139,26 @@ opts="
   -p 8080:80
 "
 
-command_reload() (
+command_reload() {
   "$file" exec nginx -s reload
-)
+}
 ```
 
 `./nginx reload` will be available.
 
+#### `main` function
+This function is useful for invoking another command.
+
+example:
+```sh
+#!/usr/bin/env docker.sh
+
+image=nginx:alpine
+
+command_top() {
+  main exec sh -c 'eval `resize` && exec top'
+}
+```
 
 ## Available command
 
