@@ -86,10 +86,12 @@ If `name` is not specified in the spec file, it will be `$dirname-$filename-$dir
 *NOTE*: You can use`show_cmds` to see the final result of constructed argument.
 
 #### `quote` function.
-Because POSIX shell does't support array (actually tt does provide ONE array, the args, `"$@"`),
+Because POSIX shell does't support array (actually it does provide ONE array, the args, `"$@"`),
 We provide `quote` function utility, to safely convert string to quoted one so you can use it in `eval` and `set` command to modify `"$@"`.
 
 This function is also useful to serialize array into string.
+
+example usage:
 
 ```sh
 old_args=$(no_proc=y quote "$@")
@@ -275,7 +277,7 @@ pgadmin4 will be exposed on port 5050.
 
 to start wordpress, run
 
-    ./example/wordpress-mariadb/wordpress
+    ./example/wordpress-mariadb/wordpress start
 
 wordpress will be exposed on port 8080.
 
