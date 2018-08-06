@@ -1,5 +1,6 @@
 #!/usr/bin/env docker.sh
 
+must_local=y
 image=jenkins/jenkins
 opts_vol="-v '$dir/jenkins_home:/var/jenkins_home'"
 opts="
