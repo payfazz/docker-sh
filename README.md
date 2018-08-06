@@ -288,5 +288,15 @@ to start phpmyadmin, run
 
 phpmyadmin will be exposed on port 8080.
 
+### jenkins
+
+to start jenkins, run
+
+    ./example/jenkins/app start
+
+jenkins will be exposed on port 8080.
+
+
 ## TODO
+
 - Automated testing

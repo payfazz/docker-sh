@@ -1,0 +1,20 @@
+#!/usr/bin/env docker.sh
+
+image=jenkins/jenkins
+opts_vol="-v '$dir/jenkins_home:/var/jenkins_home'"
+opts="
+  -p 8080:8080
+  $opts_vol
+"
+
+pre_start() {
+  if [ "${1:-}" = run ]; then
+    # we need to chown the dir, due to bind-mount will create directory owned by root.
+    tmp=$(quote "$opts_vol") || return 1
+    eval "set -- $tmp"
+    docker run -it --rm \
+      "$@" \
+      -u 0:0 --entrypoint /bin/sh \
+      "$image" -c 'chown jenkins:jenkins /var/jenkins_home'
+  fi
+}
