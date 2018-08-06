@@ -5,7 +5,7 @@
 # Note:
 # every code must compatible with POSIX shell
 
-# this quote function copied from /lib/quote.sh, DO NOT EDIT
+# this quote function copied from $REPO/lib/quote.sh, DO NOT EDIT
 quote() (
   ret=; curr=; PSret=; tmp=; token=; no_proc=${no_proc:-n}; count=${count:--1};
   if [ "$count" != "$((count+0))" ]; then echo "count must be integer" >&2; return 1; fi
@@ -387,7 +387,7 @@ EOF
   *)
     action="command_$action"
     if type "$action" 2>/dev/null | grep -q -F function; then
-      "$action" "$@" || return $?
+      ( "$action" "$@" ) || return $?
       return 0
     else
       printf 'function "%s" not exists\n' "$action" >&2
