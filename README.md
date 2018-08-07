@@ -73,6 +73,11 @@ start the project with running:
 
 and done. You can access wordpress on http://localhost:8080
 
+
+## Use it with ansible
+
+We also provide ansible module for this script, see inside [ansible_module](./ansible_module/README.md) directory.
+
 ## TODO
 
 - Automated testing
