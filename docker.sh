@@ -177,7 +177,7 @@ _main() {
         if ! exists container "$name"; then
           if [ "${must_local:-}" = "y" ]; then
             _assert_local_docker || {
-              echo "docker daemon is not on local machine." >&2
+              echo "docker daemon is not running on local machine." >&2
               exit 1
             }
           fi
