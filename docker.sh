@@ -181,10 +181,10 @@ _main() {
               exit 1
             }
           fi
+          _exec_if_fn_exists "pre_$action" run || exit $?
           if ! exists image "$image"; then
             ( _main pull; ) || exit $?
           fi
-          _exec_if_fn_exists "pre_$action" run || exit $?
           if [ -n "${net:-}" ] && ! exists network "$net"; then
             docker network create --driver bridge --label kurnia_d_win.docker.autoremove=true "$net" >/dev/null \
               || exit $?
