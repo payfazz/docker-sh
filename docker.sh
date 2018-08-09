@@ -157,10 +157,9 @@ _assert_local_docker() (
   file="$dir/$file"
   printf %s "$str" > "$file"
   str2=$(docker run \
-    --rm --entrypoint sh \
-    --pid host --net host --uts host --ipc=host \
+    --rm --entrypoint cat \
     -v "$file:/tmp/test-file:ro" \
-    busybox -c "cat /tmp/test-file" 2>/dev/null
+    busybox /tmp/test-file 2>/dev/null
   ) || :
   rm -f "$file"
   [ "$str" = "$str2" ]
