@@ -26,6 +26,10 @@ _help_str="Available commands:
   update             pull the image and recreate container
                      if status return different_image or different_opts
   help               Show this message
+
+NOTE:
+- Custom command are not listed
+- See https://github.com/payfazz/docker-sh/blob/master/DOCS.md#available-command for more info.
 "
 
 # this quote function copied from lib/quote.sh, DO NOT EDIT
