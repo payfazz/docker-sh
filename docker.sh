@@ -119,6 +119,11 @@ running() {
   [ "$(docker inspect --type container -f '{{.State.Running}}' "$1" 2>/dev/null)" = true ]
 }
 
+panic() {
+  if [ $# -gt 0 ]; then echo "$@" >&2; fi
+  exit 1
+}
+
 _construct_run_cmds() (
   ret="$(quote "${opts:-}") " || { echo 'cannot process "opts"' >&2; return 1; }
   eval "set -- $ret"
@@ -179,10 +184,7 @@ _main() {
       if ! running "$name"; then
         if ! exists container "$name"; then
           if [ "${must_local:-}" = "y" ]; then
-            _assert_local_docker || {
-              echo "docker daemon is not running on local machine." >&2
-              exit 1
-            }
+            _assert_local_docker || panic "docker daemon is not running on local machine"
           fi
           _exec_if_fn_exists "pre_$action" run || exit $?
           if ! exists image "$image"; then
@@ -230,8 +232,7 @@ _main() {
         _exec_if_fn_exists "post_$action" || exit $?
         exit 0
       elif [ "$action" = restart ]; then
-        echo 'container is not running' >&2
-        exit 1
+        panic 'container is not running'
       fi
       exit 0
       ;;
@@ -276,15 +277,14 @@ _main() {
 
     exec|exec_root)
       if running "$name"; then
-        [ $# = 0 ] && { echo 'no command to execute' >&2; exit 1; }
+        [ $# = 0 ] && panic 'no command to execute'
         tmp_opts='--interactive '
         [ "$action" = exec_root ] && tmp_opts="$tmp_opts--user 0:0 "
         [ -t 0 ] && [ -t 1 ] && [ -t 2 ] && tmp_opts="$tmp_opts--tty "
         exec docker exec $tmp_opts "$name" "$@"
         exit 1
       else
-        echo 'container is not running' >&2
-        exit 1
+        panic 'container is not running'
       fi
       exit 0
       ;;
@@ -307,8 +307,7 @@ _main() {
         docker kill "$@" "$name" >/dev/null || exit $?
         exit 0
       else
-        echo 'container is not running' >&2
-        exit 1
+        panic 'container is not running'
       fi
       exit 0
       ;;
@@ -318,8 +317,7 @@ _main() {
         exec docker "$action" "$name" "$@"
         exit 1
       else
-        echo "container not exists" >&2
-        exit 1
+        panic "container not exists"
       fi
       exit 0
       ;;
@@ -345,11 +343,10 @@ _main() {
 
     show_running_cmds)
       if exists container "$name"; then
-        exec docker inspect -f '{{index .Config.Labels "kurnia_d_win.docker.run_opts"}}' "$name" 2>/dev/null;
+        exec docker inspect -f '{{index .Config.Labels "kurnia_d_win.docker.run_opts"}}' "$name"
         exit 1
       else
-        echo "container not exists" >&2
-        exit 1
+        panic "container not exists"
       fi
       exit 0
       ;;
@@ -388,8 +385,7 @@ _main() {
         fi
         exit 0
       else
-        echo 'container is not running, update command only supported for running container' >&2
-        exit 1
+        panic 'container is not running, update command only supported for running container'
       fi
       exit 0
       ;;
@@ -401,15 +397,13 @@ _main() {
           "$name"
         exit 1
       else
-        echo 'container is not running' >&2
-        exit 1
+        panic 'container is not running'
       fi
       exit 0
       ;;
 
     help)
-      echo "$_help_str"
-      exit 1
+      panic "$_help_str"
       ;;
 
     *)
@@ -418,8 +412,7 @@ _main() {
         ( "$action" "$@" ) || exit $?
         exit 0
       else
-        printf 'function "%s" not exists\n' "$action" >&2
-        exit 1
+        panic "function \"$action\" not exists"
       fi
       exit 0
       ;;
@@ -434,8 +427,7 @@ main() (
 # if this file is not sourced with dot (.) command
 if grep -qF 6245455020934bb2ad75ce52bbdc54b7 "$0" 2>/dev/null; then
   if ! [ -r "${1:-}" ]; then
-    printf 'Usage: %s <file> <command> [args...]\n' "$0" >&2
-    exit 1
+    panic "Usage: $0 <file> <command> [args...]"
   fi
   file=$1; shift
   [ "${file#/}" = "$file" ] && file=$PWD/$file
@@ -444,7 +436,7 @@ if grep -qF 6245455020934bb2ad75ce52bbdc54b7 "$0" 2>/dev/null; then
   filename=$(basename "$file")
   dirname=$(basename "$dir")
   dirsum=$(printf %s "$dir" | cksum | tr -d ' ')
-  . "$file" || exit 1
+  . "$file" || panic "error processing $file"
   if [ -z "${name:-}" ]; then
     name="$dirname-$filename-$dirsum"
   fi

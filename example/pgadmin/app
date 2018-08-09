@@ -11,10 +11,10 @@ opts="
 "
 
 pre_start() {
-  "$dir/../postgres/app" start || { echo 'failed to start postgres'; return 1; }
+  "$dir/../postgres/app" start || panic 'failed to start postgres'
   if [ "${1:-}" = run ]; then
     # we need to chown the dir, due to bind-mount will create directory owned by root.
-    tmp=$(quote "$opts_vol") || return 1
+    tmp=$(quote "$opts_vol") || panic
     eval "set -- $tmp"
     docker run -it --rm \
       "$@" \

@@ -146,6 +146,9 @@ command_reload() {
 
 `./nginx reload` will be available.
 
+#### `panic` function
+Print arguments to stderr and exit with exitcode 1
+
 #### `main` function
 This function is useful for invoking another command.
 

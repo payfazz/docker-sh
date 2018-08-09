@@ -11,7 +11,7 @@ opts="
 pre_start() {
   if [ "${1:-}" = run ]; then
     # we need to chown the dir, due to bind-mount will create directory owned by root.
-    tmp=$(quote "$opts_vol") || return 1
+    tmp=$(quote "$opts_vol") || panic
     eval "set -- $tmp"
     docker run -it --rm \
       "$@" \
