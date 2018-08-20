@@ -195,7 +195,11 @@ _main() {
               || exit $?
           fi
           eval "set -- $constructed_run_cmds"
-          docker create --label "kurnia_d_win.docker.run_opts=$constructed_run_cmds" "$@" >/dev/null || exit $?
+          if [ -z "${file:-}" ]; then file="*unknown"; fi
+          docker create \
+            --label "kurnia_d_win.docker.run_opts=$constructed_run_cmds" \
+            --label "kurnia_d_win.docker.initial_spec_file=$file" \
+            "$@" >/dev/null || exit $?
           _exec_if_fn_exists "pre_$action" created || exit $?
           [ "${create_only:-}" = "y" ] && exit 0
           docker start "$name" >/dev/null || exit $?
