@@ -199,6 +199,9 @@ Exec command inside container.
 ### `exec_root`
 Exec command inside container as root.
 
+### `exec_as`
+Exec program inside the container as specified user.
+
 ### `kill`
 Kill the container. The container will be stoped based on `kill_opts` and/or any argument passed to this command. Only `-s`/`--signal` are supported for now.
 

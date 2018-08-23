@@ -12,6 +12,7 @@ _help_str="Available commands:
   rm                 Remove the container
   exec               Exec program inside the container
   exec_root          Exec program inside the container (as root)
+  exec_as            Exec program inside the container as specified user
   kill               Force kill the container
   logs               Show the log of the container
   port               Show port forwarding
@@ -279,13 +280,20 @@ _main() {
       exit 0
       ;;
 
-    exec|exec_root)
+    exec|exec_root|exec_as)
       if running "$name"; then
+        user=; tmp_opts='-i '
+        [ -t 0 ] && [ -t 1 ] && [ -t 2 ] && tmp_opts="$tmp_opts-t "
+        case "$action" in
+          exec_root) user="0:0" ;;
+          exec_as) user="${1:-}"; shift || : ;;
+        esac
         [ $# = 0 ] && panic 'no command to execute'
-        tmp_opts='--interactive '
-        [ "$action" = exec_root ] && tmp_opts="$tmp_opts--user 0:0 "
-        [ -t 0 ] && [ -t 1 ] && [ -t 2 ] && tmp_opts="$tmp_opts--tty "
-        exec docker exec $tmp_opts "$name" "$@"
+        if [ -n "$user" ]; then
+          exec docker exec $tmp_opts -u "$user" "$name" "$@"
+        else
+          exec docker exec $tmp_opts "$name" "$@"
+        fi
         exit 1
       else
         panic 'container is not running'
