@@ -109,6 +109,10 @@ quote() (
   printf %s\\n "${ret% }"
 )
 
+calc_cksum() {
+  printf %s "${1:-}" | cksum | tr -d ' '
+}
+
 exists() {
   case $1 in
   network|volume) [ "$(docker "$1" inspect -f ok "$2" 2>/dev/null)" = ok ] ;;
@@ -447,7 +451,7 @@ if grep -qF 6245455020934bb2ad75ce52bbdc54b7 "$0" 2>/dev/null; then
   file="$dir/$(basename "$file")"
   filename=$(basename "$file")
   dirname=$(basename "$dir")
-  dirsum=$(printf %s "$dir" | cksum | tr -d ' ')
+  dirsum=$(calc_cksum "$dir")
   . "$file" || panic "error processing $file"
   if [ -z "${name:-}" ]; then
     name="$dirname-$filename-$dirsum"

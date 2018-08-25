@@ -58,7 +58,7 @@ Some variable will be defined before execute your spec file (do not edit these v
 - `$filename`,
   The name of the spec file (name only, without path).
 - `$dirsum`,
-  The checksum of `$dir`. Useful for avoiding name collision (see example for usage).
+  The checksum of `$dir` calculated using `calc_cksum` function. Useful for avoiding name collision (see example for usage).
 
 If `name` is not specified in the spec file, it will be `$dirname-$filename-$dirsum`.
 
@@ -125,6 +125,9 @@ if running my-container; then
   # do something
 fi
 ```
+
+#### `calc_cksum` function.
+This helper function is to calculate cheksum
 
 #### Adding arbitary command.
 You can add arbitrary command by defining function `command_<name>`, for example adding `reload` command to nginx spec file.
