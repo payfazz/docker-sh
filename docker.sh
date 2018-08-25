@@ -195,10 +195,14 @@ _main() {
           if ! exists image "$image"; then
             ( _main pull; ) || exit $?
           fi
-          if [ -n "${net:-}" ] && ! exists network "$net"; then
-            docker network create --driver bridge --label kurnia_d_win.docker.autoremove=true "$net" >/dev/null \
-              || exit $?
-          fi
+          case "${net:-}" in
+          ""|container:*|bridge|host|none) : ;;
+          *)  if ! exists network "$net"; then
+                docker network create --driver bridge --label kurnia_d_win.docker.autoremove=true "$net" >/dev/null \
+                || exit $?
+              fi
+              ;;
+          esac
           eval "set -- $constructed_run_cmds"
           if [ -z "${file:-}" ]; then file="*unknown"; fi
           docker create \
