@@ -175,6 +175,15 @@ _assert_local_docker() (
   [ "$str" = "$str2" ]
 )
 
+_update() {
+  if ! running "$name" && [ "${create_only:-}" != y ]; then
+    echo "WARNING: Container is not running, running the container after update" >&2
+  fi
+  echo "Recreating container ..." >&2
+  { ( _main stop; ) && ( _main rm; ) && ( _main start; ); } || return $?
+  return 0
+}
+
 _main() {
   action=help
   [ $# -gt 0 ] && { action=$1; shift; }
@@ -379,7 +388,7 @@ _main() {
       ;;
 
     update)
-      if running "$name"; then
+      if exists container "$name"; then
         pull=y; force=n
         for arg; do
           case $arg in
@@ -392,20 +401,18 @@ _main() {
           ( _main pull; ) || exit $?
         fi
         if [ "$force" = "y" ]; then
-          echo "Recreating container ..." >&2
-          { ( _main stop; ) && ( _main rm; ) && ( _main start; ); } || exit $?
+          _update || exit $?
           exit 0
         else
           case $(_main status) in
           *different_*)
-            echo "Recreating container ..." >&2
-            { ( _main stop; ) && ( _main rm; ) && ( _main start; ); } || exit $?
+            _update || exit $?
             exit 0 ;;
           esac
         fi
         exit 0
       else
-        panic 'container is not running, update command only supported for running container'
+        panic 'container is not exists'
       fi
       exit 0
       ;;
