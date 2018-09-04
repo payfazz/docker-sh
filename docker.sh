@@ -109,8 +109,9 @@ quote() (
   printf %s\\n "${ret% }"
 )
 
+
 calc_cksum() {
-  printf %s "${1:-}" | cksum | tr -d ' '
+  printf %s "${1:-}" | cksum | LC_ALL=C tr -d ' '
 }
 
 exists() {
@@ -161,8 +162,8 @@ _exec_if_fn_exists() (
 )
 
 _assert_local_docker() (
-  str=$(tr -cd 0-9a-zA-Z < /dev/urandom | head -c 8)
-  file=$(tr -cd 0-9a-zA-Z < /dev/urandom | head -c 8)
+  str=$(LC_ALL=C tr -cd 0-9a-zA-Z < /dev/urandom | head -c 8)
+  file=$(LC_ALL=C tr -cd 0-9a-zA-Z < /dev/urandom | head -c 8)
   [ -z "${dir:-}" ] && dir=/tmp
   file="$dir/$file"
   printf %s "$str" > "$file"
