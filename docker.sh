@@ -208,7 +208,10 @@ _main() {
           case "${net:-}" in
           ""|container:*|bridge|host|none) : ;;
           *)  if ! exists network "$net"; then
-                docker network create --driver bridge --label kurnia_d_win.docker.autoremove=true "$net" >/dev/null \
+                docker network create --driver bridge \
+                  --label kurnia_d_win.docker.autoremove=true \
+                  --label "kurnia_d_win.docker.initial_spec_file=$file" \
+                  "$net" >/dev/null \
                 || exit $?
               fi
               ;;
