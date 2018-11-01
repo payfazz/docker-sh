@@ -162,8 +162,8 @@ _exec_if_fn_exists() (
 )
 
 _assert_local_docker() (
-  str=$(LC_ALL=C tr -cd 0-9a-zA-Z < /dev/urandom | head -c 8)
-  file=$(LC_ALL=C tr -cd 0-9a-zA-Z < /dev/urandom | head -c 8)
+  str=$(od -An -v -tx8 -N8 -w8 /dev/urandom | LC_ALL=C tr -d '[:space:]')
+  file=$(od -An -v -tx8 -N8 -w8 /dev/urandom | LC_ALL=C tr -d '[:space:]')
   [ -z "${dir:-}" ] && dir=/tmp
   file="$dir/$file"
   printf %s "$str" > "$file"
