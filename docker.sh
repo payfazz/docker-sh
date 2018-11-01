@@ -458,6 +458,11 @@ main() (
 # if this file is not sourced with dot (.) command
 if grep -qF 6245455020934bb2ad75ce52bbdc54b7 "$0" 2>/dev/null; then
   if ! [ -r "${1:-}" ]; then
+    if [ "${1:-}" = upgrade ]; then
+      set -x
+      exec sh -ceu \
+        "curl -sSLf https://raw.githubusercontent.com/payfazz/docker-sh/master/install.sh | sudo sh -s - $0"
+    fi
     panic "Usage: $0 <file> <command> [args...]"
   fi
   file=$1; shift
