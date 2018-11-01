@@ -462,7 +462,7 @@ if grep -qF 6245455020934bb2ad75ce52bbdc54b7 "$0" 2>/dev/null; then
   fi
   file=$1; shift
   [ "${file#/}" = "$file" ] && file=$PWD/$file
-  dir=$(cd "$(dirname "$file")" && pwd)
+  dir=$(cd -P "$(dirname "$file")" && pwd)
   file="$dir/$(basename "$file")"
   filename=$(basename "$file")
   dirname=$(basename "$dir")
