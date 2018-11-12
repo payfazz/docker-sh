@@ -33,7 +33,9 @@ NOTE:
 - See https://github.com/payfazz/docker-sh/blob/master/DOCS.md#available-command for more info.
 "
 
-# this quote function copied from lib/quote.sh, DO NOT EDIT
+# this quote function copied from
+# https://raw.githubusercontent.com/payfazz/sh-script/99741650bedf9b3b732bd2f6908f8f3423fb0bf2/lib/quote.sh
+# DO NOT EDIT
 quote() (
   ret=; curr=; PSret=; tmp=; token=; no_proc=${no_proc:-n}; count=${count:--1};
   if [ "$count" != "$((count+0))" ]; then echo "count must be integer" >&2; return 1; fi
