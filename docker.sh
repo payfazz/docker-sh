@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Author: win@payfazz.com
+# source code is hosted on https://github.com/payfazz/docker-sh
 
 # Note:
 # every code must compatible with POSIX shell
