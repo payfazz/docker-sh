@@ -32,6 +32,10 @@ Variable:
   useful if you want to use bind-mount.
 - `create_only`,
   If set to `y`, `start` command will only create the container, but won't run it.
+- `skip_real_pull`,
+  If set to `y`, `pull` command will not run `docker pull` to pull the image,
+  *NOTE*: if set to `y` when there is no local image exists, `start` command will still
+  pull the image, because of `docker create` of docker-cli itself.
 
 *NOTE*: `opts`, `args`, `stop_opts`, `rm_opts`, `kill_opts` are processed with `quote` function (see below).
 

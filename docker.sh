@@ -388,7 +388,9 @@ _main() {
 
     pull)
       _exec_if_fn_exists "pre_$action" || exit $?
-      docker pull "$image" || exit $?
+      if [ "${skip_real_pull:-}" != "y" ]; then
+        docker pull "$image" || exit $?
+      fi
       _exec_if_fn_exists "post_$action" || exit $?
       exit 0
       ;;
