@@ -207,6 +207,7 @@ _main() {
           _exec_if_fn_exists "pre_$action" run || exit $?
           if ! exists image "$image"; then
             ( _main pull; ) || exit $?
+            exists image "$image" || panic "image $image doesn't exists"
           fi
           case "${net:-}" in
           ""|container:*|bridge|host|none) : ;;
