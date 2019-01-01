@@ -35,7 +35,7 @@ NOTE:
 "
 
 # this quote function copied from
-# https://raw.githubusercontent.com/payfazz/sh-script/99741650bedf9b3b732bd2f6908f8f3423fb0bf2/lib/quote.sh
+# https://raw.githubusercontent.com/payfazz/sh-script/ba3ff1c2b2c8022e440499f5189843399b64dc59/lib/quote.sh
 # DO NOT EDIT
 quote() (
   ret=; curr=; PSret=; tmp=; token=; no_proc=${no_proc:-n}; count=${count:--1};
@@ -55,10 +55,10 @@ quote() (
               nextop=RN; tmp=
               if [ -z "$token" ]; then [ -z "$rest" ] && tmp=y;
               else [ -n "$curr" ] && tmp=y; fi
-              if [ "$tmp" ]; then ret="$ret'$curr' "; curr=; count=$((count-1)); fi ;;
+              if [ "$tmp" ]; then ret="$ret'$curr' "; curr=; : $((count=count-1)); fi ;;
           *)  case $no_proc in
               y)  ret="$ret$(printf %s\\n "$token" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/'/") "
-                  count=$((count-1)); nextop=RN ;;
+                  : $((count=count-1)); nextop=RN ;;
               n)  case $token in
                   *[\\\'\"]*)
                       tmp=${token%%[\\\'\"]*}; token=${token#"$tmp"}; curr="$curr$tmp"
@@ -67,7 +67,7 @@ quote() (
                       \'*) token=${token#\'}; nextop=PQ ;;
                       \"*) token=${token#\"}; nextop=PD ;;
                       esac ;;
-                  *)  ret="$ret'$curr$token' "; curr=; count=$((count-1)); nextop=RN ;;
+                  *)  ret="$ret'$curr$token' "; curr=; : $((count=count-1)); nextop=RN ;;
                   esac ;;
               esac ;;
           esac ;;
@@ -111,7 +111,6 @@ quote() (
   done
   printf %s\\n "${ret% }"
 )
-
 
 calc_cksum() {
   printf %s "${1:-}" | cksum | LC_ALL=C tr -d ' '
@@ -250,11 +249,11 @@ _main() {
           a=$(eval echo "\${$i}")
           case $a in
           -t|--time)
-            i=$((i+1)); a=$(eval echo "\${$i}")
+            : $((i=i+1)); a=$(eval echo "\${$i}")
             tmp_opts="$tmp_opts'--time' $(no_proc=y count=1 quote "$a") "
             ;;
           esac
-          i=$((i+1))
+          : $((i=i+1))
         done
         _exec_if_fn_exists "pre_$action" || exit $?
         eval "set -- $tmp_opts"
@@ -277,7 +276,7 @@ _main() {
             -[fvl]|-[fvl][fvl]|-[fvl][fvl][fvl]) tmp_opts="$tmp_opts$a " ;;
             --force|--volumes|--link) tmp_opts="$tmp_opts$a " ;;
           esac
-          i=$((i+1))
+          : $((i=i+1))
         done
         saved_run_cmds=$(docker inspect -f '{{index .Config.Labels "kurnia_d_win.docker.run_opts"}}' "$name" 2>/dev/null) || :
         saved_run_cmds=$(no_proc=y quote "$saved_run_cmds")
@@ -290,13 +289,13 @@ _main() {
           a=$(eval echo "\${$i}")
           case $a in
           "'--network'")
-            i=$((i+1)); a=$(eval echo "\${$i}")
+            : $((i=i+1)); a=$(eval echo "\${$i}")
             init_net=${a%"'"}
             init_net=${init_net#"'"}
             break
             ;;
           esac
-          i=$((i+1))
+          : $((i=i+1))
         done
         if [ "$(docker network inspect -f '{{index .Labels "kurnia_d_win.docker.autoremove"}}{{.Containers|len}}' "$init_net" 2>/dev/null)" = true0 ]; then
           docker network rm "$init_net" >/dev/null 2>&1 || :
@@ -334,11 +333,11 @@ _main() {
           a=$(eval echo "\${$i}")
           case $a in
           -s|--signal)
-            i=$((i+1)); a=$(eval echo "\${$i}")
+            : $((i=i+1)); a=$(eval echo "\${$i}")
             tmp_opts="$tmp_opts'--signal' $(no_proc=y count=1 quote "$a") "
             ;;
           esac
-          i=$((i+1))
+          : $((i=i+1))
         done
         eval "set -- $tmp_opts"
         docker kill "$@" "$name" >/dev/null || exit $?
