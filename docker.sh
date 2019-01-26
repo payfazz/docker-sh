@@ -25,6 +25,7 @@ _help_str="Available commands:
   show_running_cmds  Show the arguments to docker run in current running container
   pull               Pull the image
   ip                 Show the container ip
+  pid                Show the PID of main process in container
   update             pull the image and recreate container
                      if status return different_image or different_opts
   help               Show this message
@@ -431,6 +432,16 @@ _main() {
         exec docker inspect -f \
           "{{index .NetworkSettings.Networks \"${net:-bridge}\" \"IPAddress\"}}" \
           "$name"
+        exit 1
+      else
+        panic 'container is not running'
+      fi
+      exit 0
+      ;;
+
+    pid)
+      if running "$name"; then
+        exec docker inspect -f "{{.State.Pid}}" "$name"
         exit 1
       else
         panic 'container is not running'
