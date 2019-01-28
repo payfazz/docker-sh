@@ -493,9 +493,7 @@ if grep -qF 6245455020934bb2ad75ce52bbdc54b7 "$0" 2>/dev/null; then
   filename=$(basename "$file")
   dirname=$(basename "$dir")
   dirsum=$(calc_cksum "$dir")
+  name="$dirname-$filename-$dirsum"
   . "$file" || panic "error processing $file"
-  if [ -z "${name:-}" ]; then
-    name="$dirname-$filename-$dirsum"
-  fi
   _main "$@"
 fi
