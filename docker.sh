@@ -368,7 +368,11 @@ _main() {
           printf 'different_image '
         fi
         if running "$name"; then
-          printf 'running\n'
+          if [ "$(docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null)" = "restarting" ]; then
+            printf 'restarting\n'
+          else
+            printf 'running\n'
+          fi
         else
           printf 'not_running\n'
         fi
