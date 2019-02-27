@@ -371,7 +371,21 @@ _main() {
           if [ "$(docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null)" = "restarting" ]; then
             printf 'restarting\n'
           else
-            printf 'running\n'
+            if [ "$(docker inspect -f '{{.State.Health}}' "$name" 2>/dev/null)" = "<nil>" ]; then
+              printf 'running\n'
+            else
+              case "$(docker inspect -f '{{.State.Health.Status}}' "$name" 2>/dev/null)" in
+              "healthy")
+                printf 'running\n'
+                ;;
+              "starting")
+                printf 'starting\n'
+                ;;
+              *)
+                printf 'not_healthy\n'
+                ;;
+              esac
+            fi
           fi
         else
           printf 'not_running\n'
