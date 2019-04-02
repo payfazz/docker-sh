@@ -169,7 +169,7 @@ _assert_local_docker() (
   file=$(od -An -v -tx8 -N8 -w8 /dev/urandom | LC_ALL=C tr -d '[:space:]')
   [ -z "${dir:-}" ] && dir=/tmp
   file="$dir/$file"
-  printf %s "$str" > "$file"
+  ( printf %s "$str" > "$file"; ) 2>/dev/null || return 1
   str2=$(docker run \
     --rm --entrypoint cat \
     -v "$file:/tmp/test-file:ro" \
