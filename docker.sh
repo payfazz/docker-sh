@@ -477,7 +477,7 @@ _main() {
         ( "$action" "$@" ) || exit $?
         exit 0
       else
-        panic "function \"$action\" not exists"
+        panic "$(printf '%s\n%s\n' "function \"$action\" not exists" "$_help_str")"
       fi
       exit 0
       ;;
