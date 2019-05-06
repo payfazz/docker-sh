@@ -28,6 +28,9 @@ _help_str="Available commands:
   pid                Show the PID of main process in container
   update             pull the image and recreate container
                      if status return different_image or different_opts
+  inspect            Show the low-level of the container
+  stats              Show the stats of the container
+  top                Show the running process inside container
   help               Show this message
 
 NOTE:
@@ -36,7 +39,7 @@ NOTE:
 "
 
 # this quote function copied from
-# https://raw.githubusercontent.com/payfazz/sh-script/ba3ff1c2b2c8022e440499f5189843399b64dc59/lib/quote.sh
+# https://raw.githubusercontent.com/payfazz/sh-script/29740f001c4ddcdde581a777f2af0e4855bb1651/lib/quote.sh
 # DO NOT EDIT
 quote() (
   ret=; curr=; PSret=; tmp=; token=; no_proc=${no_proc:-n}; count=${count:--1};
@@ -58,7 +61,7 @@ quote() (
               else [ -n "$curr" ] && tmp=y; fi
               if [ "$tmp" ]; then ret="$ret'$curr' "; curr=; : $((count=count-1)); fi ;;
           *)  case $no_proc in
-              y)  ret="$ret$(printf %s\\n "$token" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/'/") "
+              y)  ret="$ret$(printf %s\\n "$token" | LC_ALL=C sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/'/") "
                   : $((count=count-1)); nextop=RN ;;
               n)  case $token in
                   *[\\\'\"]*)
@@ -173,7 +176,7 @@ _assert_local_docker() (
   str2=$(docker run \
     --rm --entrypoint cat \
     -v "$file:/tmp/test-file:ro" \
-    busybox /tmp/test-file 2>/dev/null
+    alpine /tmp/test-file 2>/dev/null
   ) || :
   rm -f "$file"
   [ "$str" = "$str2" ]
@@ -190,7 +193,7 @@ _update() {
 
 _main() {
   action=help
-  [ $# -gt 0 ] && { action=$1; shift; }
+  [ $# -gt 0 ] && action=$1 && shift || :
   constructed_run_cmds=$(_construct_run_cmds) || exit $?
   case ${action:-} in
     name) echo "$name"; exit 0 ;;
@@ -349,8 +352,9 @@ _main() {
       exit 0
       ;;
 
-    logs|port)
+    logs|port|inspect|stats|top)
       if exists container "$name"; then
+        case "$action" in inspect|stats|top) set --;; esac
         exec docker "$action" "$name" "$@"
         exit 1
       else
