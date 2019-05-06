@@ -136,7 +136,7 @@ panic() {
   exit 1
 }
 
-_construct_run_cmds() (
+_construct_run_cmds() {
   ret="$(quote "${opts:-}") " || { echo 'cannot process "opts"' >&2; return 1; }
   eval "set -- $ret"
   for arg; do
@@ -154,7 +154,7 @@ _construct_run_cmds() (
   ret=${ret# }
   ret=${ret% }
   printf %s "$ret"
-)
+}
 
 _exec_if_fn_exists() (
   if type "$1" 2>/dev/null | grep -q -F function; then
@@ -167,9 +167,9 @@ _exec_if_fn_exists() (
   return 0
 )
 
-_assert_local_docker() (
-  str=$(od -An -v -tx8 -N8 -w8 /dev/urandom | LC_ALL=C tr -d '[:space:]')
-  file=$(od -An -v -tx8 -N8 -w8 /dev/urandom | LC_ALL=C tr -d '[:space:]')
+_assert_local_docker() {
+  str=$(od -An -v -tx8 -N8 -w8 /dev/urandom)
+  file=$(od -An -v -tx8 -N8 -w8 /dev/urandom)
   [ -z "${dir:-}" ] && dir=/tmp
   file="$dir/$file"
   ( printf %s "$str" > "$file"; ) 2>/dev/null || return 1
@@ -180,7 +180,7 @@ _assert_local_docker() (
   ) || :
   rm -f "$file"
   [ "$str" = "$str2" ]
-)
+}
 
 _update() {
   if ! running "$name" && [ "${create_only:-}" != y ]; then
