@@ -137,6 +137,8 @@ panic() {
 }
 
 _construct_run_cmds() {
+  [ -z "${image:-}" ] && { echo '"image" cannot be empty' >&2; return 1; }
+  [ -z "${name:-}" ]  && { echo '"name" cannot be empty'  >&2; return 1; }
   ret="$(quote "${opts:-}") " || { echo 'cannot process "opts"' >&2; return 1; }
   eval "set -- $ret"
   for arg; do
@@ -144,11 +146,8 @@ _construct_run_cmds() {
     --name|--net|--network) printf '"opts" cannot contain "%s"\n' "$arg" >&2; return 1 ;;
     esac
   done
-  ret="$ret'--name' "
-  [ -z "${name:-}" ] && { echo '"name" cannot be empty' >&2; return 1; }
-  ret="$ret$(no_proc=y count=1 quote "$name") "
+  ret="$ret'--name' $(no_proc=y count=1 quote "$name") "
   [ -n "${net:-}" ] && ret="$ret'--network' $(no_proc=y count=1 quote "$net") "
-  [ -z "${image:-}" ] && { echo '"image" cannot be empty' >&2; return 1; }
   ret="$ret$(no_proc=y count=1 quote "$image") "
   ret="$ret$(quote "${args:-}")" || { echo 'cannot process "args"' >&2; return 1; }
   ret=${ret# }
@@ -167,18 +166,22 @@ _exec_if_fn_exists() (
   return 0
 )
 
+_random() {
+  LC_ALL=C tr -cd 0-9a-f < /dev/urandom | head -c 16
+}
+
 _assert_local_docker() {
-  str=$(od -An -v -tx8 -N8 -w8 /dev/urandom)
-  file=$(od -An -v -tx8 -N8 -w8 /dev/urandom)
+  str=$(_random)
+  tmp_file=$(_random)
   [ -z "${dir:-}" ] && dir=/tmp
-  file="$dir/$file"
-  ( printf %s "$str" > "$file"; ) 2>/dev/null || return 1
+  tmp_file="$dir/$tmp_file"
+  ( printf %s "$str" > "$tmp_file"; ) 2>/dev/null || return 1
   str2=$(docker run \
     --rm --entrypoint cat \
-    -v "$file:/tmp/test-file:ro" \
+    -v "$tmp_file:/tmp/test-file:ro" \
     alpine /tmp/test-file 2>/dev/null
   ) || :
-  rm -f "$file"
+  rm -f "$tmp_file"
   [ "$str" = "$str2" ]
 }
 
@@ -191,15 +194,23 @@ _update() {
   return 0
 }
 
+_is_managed() {
+  [ -n "${file:-}" ] && \
+  [ "$file" = "$(docker inspect -f '{{index .Config.Labels "kurnia_d_win.docker.initial_spec_file"}}' "$name" 2>/dev/null)" ]
+}
+
 _main() {
   action=help
   [ $# -gt 0 ] && action=$1 && shift || :
-  constructed_run_cmds=$(_construct_run_cmds) || exit $?
   case ${action:-} in
     name) echo "$name"; exit 0 ;;
     image) echo "$image"; exit 0 ;;
     net) echo "${net:-bridge}"; exit 0 ;;
-    show_cmds) echo "$constructed_run_cmds"; exit 0 ;;
+    show_cmds)
+      constructed_run_cmds=$(_construct_run_cmds) || exit $?
+      echo "$constructed_run_cmds";
+      exit 0
+      ;;
 
     start)
       if ! running "$name"; then
@@ -207,6 +218,8 @@ _main() {
           if [ "${must_local:-}" = "y" ]; then
             _assert_local_docker || panic "docker daemon is not running on local machine"
           fi
+          if [ -z "${file:-}" ]; then file="/dev/null"; fi
+          constructed_run_cmds=$(_construct_run_cmds) || exit $?
           _exec_if_fn_exists "pre_$action" run || exit $?
           if ! exists image "$image"; then
             ( _main pull; ) || exit $?
@@ -224,7 +237,6 @@ _main() {
               ;;
           esac
           eval "set -- $constructed_run_cmds"
-          if [ -z "${file:-}" ]; then file="*unknown"; fi
           docker create \
             --label "kurnia_d_win.docker.run_opts=$constructed_run_cmds" \
             --label "kurnia_d_win.docker.initial_spec_file=$file" \
@@ -235,25 +247,29 @@ _main() {
           _exec_if_fn_exists "post_$action" run || exit $?
           exit 0
         else
+          _is_managed || panic "container \"$name\" is not managed"
           [ "${create_only:-}" = "y" ] && exit 0
           _exec_if_fn_exists "pre_$action" start || exit $?
           docker start "$name" >/dev/null || exit $?
           _exec_if_fn_exists "post_$action" start || exit $?
           exit 0
         fi
+      else
+        _is_managed || panic "container \"$name\" is not managed"
       fi
       exit 0
       ;;
 
     stop|restart)
       if running "$name"; then
+        _is_managed || panic "container \"$name\" is not managed"
         eval "set -- $(no_proc=y quote "${stop_opts:-}" "$@")"
         tmp_opts=; i=1
         while [ $i -le $# ]; do
           a=$(eval echo "\${$i}")
           case $a in
           -t|--time)
-            : $((i=i+1)); a=$(eval echo "\${$i}")
+            : $((i=i+1)); a=$(eval echo "\${$i:-}")
             tmp_opts="$tmp_opts'--time' $(no_proc=y count=1 quote "$a") "
             ;;
           esac
@@ -272,6 +288,7 @@ _main() {
 
     rm)
       if exists container "$name"; then
+        _is_managed || panic "container \"$name\" is not managed"
         eval "set -- $(no_proc=y quote "${rm_opts:-}" "$@")"
         tmp_opts=; i=1
         while [ $i -le $# ]; do
@@ -310,6 +327,7 @@ _main() {
 
     exec|exec_root|exec_as)
       if running "$name"; then
+        _is_managed || panic "container \"$name\" is not managed"
         user=; tmp_opts='-i '
         [ -t 0 ] && [ -t 1 ] && [ -t 2 ] && tmp_opts="$tmp_opts-t "
         case "$action" in
@@ -331,21 +349,22 @@ _main() {
 
     kill)
       if running "$name"; then
+        _is_managed || panic "container \"$name\" is not managed"
         eval "set -- $(no_proc=y quote "${kill_opts:-}" "$@")"
         tmp_opts=; i=1
         while [ $i -le $# ]; do
           a=$(eval echo "\${$i}")
           case $a in
           -s|--signal)
-            : $((i=i+1)); a=$(eval echo "\${$i}")
+            : $((i=i+1)); a=$(eval echo "\${$i:-}")
             tmp_opts="$tmp_opts'--signal' $(no_proc=y count=1 quote "$a") "
             ;;
           esac
           : $((i=i+1))
         done
         eval "set -- $tmp_opts"
-        docker kill "$@" "$name" >/dev/null || exit $?
-        exit 0
+        exec docker kill "$@" "$name" >/dev/null
+        exit 1
       else
         panic 'container is not running'
       fi
@@ -365,6 +384,8 @@ _main() {
 
     status)
       if exists container "$name"; then
+        _is_managed || { printf "not_docker_sh\n"; exit 0; }
+        constructed_run_cmds=$(_construct_run_cmds) || exit $?
         if [ "$(docker inspect -f '{{index .Config.Labels "kurnia_d_win.docker.run_opts"}}' "$name" 2>/dev/null)" != "$constructed_run_cmds" ]; then
           printf 'different_opts '
         fi
@@ -421,6 +442,7 @@ _main() {
 
     update)
       if exists container "$name"; then
+        _is_managed || panic "container \"$name\" is not managed"
         pull=y; force=n
         for arg; do
           case $arg in
