@@ -1,13 +1,17 @@
 #!/usr/bin/env docker.sh
 
-must_local=y
 image=thajeztah/pgadmin4
+must_local=y
 net=net0
 opts_vol="-v '$dir/data:/pgadmin'"
 opts="
   --restart always
   $opts_vol
   -p 5050:5050
+
+  --log-driver json-file
+  --log-opt max-size=50m
+  --log-opt max-file=3
 "
 
 pre_start() {

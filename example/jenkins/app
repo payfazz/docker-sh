@@ -1,11 +1,15 @@
 #!/usr/bin/env docker.sh
 
-must_local=y
 image=jenkins/jenkins
+must_local=y
 opts_vol="-v '$dir/jenkins_home:/var/jenkins_home'"
 opts="
   -p 8080:8080
   $opts_vol
+
+  --log-driver json-file
+  --log-opt max-size=50m
+  --log-opt max-file=3
 "
 
 pre_start() {

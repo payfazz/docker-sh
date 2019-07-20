@@ -1,72 +1,68 @@
-## How to use it
+# How to use it
 `docker.sh` will be used as interpreter, you need to install it in your `PATH` e.g. by copy `docker.sh` file to `/usr/local/bin` (`install.sh` will do this for you)
 
 Create spec file `nginx`
 ```sh
 #!/usr/bin/env docker.sh
 
-name=test_nginx
 image=nginx:alpine
 opts="
   -p 8080:80
 "
 ```
 
-then make it executable by `chmod 755 nginx`, after that, you can execute this file, `./nginx help` will give you more info. (see *Available Command* below)
+then make it executable by `chmod +x nginx`, after that, you can execute this file, `./nginx help` will give you more info. (see *Available Command* below)
 
-#### Variable and hook function.
-Variable:
+## Variable and hook function.
 
-- `image` (**required**)
-- `name`
-- `net`,
-  If network not exists yet, it will be created for you.
-  This network will be removed when last container attach to it removed.
-- `opts`
-- `args`
-- `stop_opts`
-- `rm_opts`
-- `kill_opts`
-- `must_local`,
-  If set to `y`, it will ensure docker daemon is running on local machine,
-  useful if you want to use bind-mount.
-- `create_only`,
-  If set to `y`, `start` command will only create the container, but won't run it.
-- `skip_real_pull`,
-  If set to `y`, `pull` command will not run `docker pull` to pull the image
+Some variable will be pre-defined before execute/evaluate your spec file (do not edit these var):
+
+| Variable name | Description |
+| --- | --- |
+| `dir` | The directory fullpath contain the spec file (may contain space) |
+| `file` | The fullpath of the spec file (may contain space) |
+| `dirname` | The directory name of spec file (name only, without path, may contain space) |
+| `filename` | The name of the spec file (name only, without path, may contain space) |
+| `dirsum` | The checksum of `$dir` calculated using `calc_cksum` (see below) function. Useful for avoiding name collision (see example for usage) |
+
+You should define following variable:
+
+| Variable name | Description |
+| --- | --- |
+| `image` (**required**) | image to be used for this container|
+| `name`| name of the container, if you don't specify this var the value will be `$dirname-$filename-$dirsum` |
+| `net`| If network not exists yet, it will be created for you. This network will be removed when last container attach to it removed. |
+| `opts` | options to be used for this container, see `docker create --help` |
+| `args` | argument to be used for this container, see `docker create --help` |
+| `stop_opts` | options to be used for `docker stop`, see `docker stop --help` |
+| `rm_opts` | options to be used for `docker rm`, see `docker rm --help` |
+| `kill_opts` | options to be used for `docker kill`, see `docker kill --help` |
+| `must_local` | If set to `y`, it will ensure docker daemon is running on local machine, useful if you want to use bind-mount. |
+| `create_only` | If set to `y`, `start` command will only create the container, but won't run it. |
+| `skip_real_pull` | If set to `y`, `pull` command will not run `docker pull` to pull the image |
+
+*NOTE*: You can use `show_cmds` (see below) to see the final result of constructed argument.
 
 *NOTE*: `opts`, `args`, `stop_opts`, `rm_opts`, `kill_opts` are processed with `quote` function (see below).
 
+Hook function that you can define:
 
-Hook function:
-- `pre_start`, see `start` command below.
-- `post_start`, see `start` command below.
-- `pre_stop`
-- `post_stop`
-- `pre_restart`
-- `post_restart`
-- `pre_rm`
-- `post_rm`
-- `pre_pull`
-- `post_pull`
+| Hook function | Description |
+| --- | --- |
+| `pre_start` | see `start` command below |
+| `post_start`| see `start` command below |
+| `pre_stop` | |
+| `post_stop` | |
+| `pre_restart` | |
+| `post_restart` | |
+| `pre_rm` | |
+| `post_rm` | |
+| `pre_pull` | |
+| `post_pull` | |
 
-Some variable will be defined before execute your spec file (do not edit these var):
-- `$dir`,
-  The directory path contain the spec file.
-- `$file`,
-  The path of the spec file.
-- `$dirname`,
-  The directory name of spec file (name only, without path).
-- `$filename`,
-  The name of the spec file (name only, without path).
-- `$dirsum`,
-  The checksum of `$dir` calculated using `calc_cksum` function. Useful for avoiding name collision (see example for usage).
+## Predefined function
 
-If `name` is not specified in the spec file, it will be `$dirname-$filename-$dirsum`.
-
-*NOTE*: You can use `show_cmds` to see the final result of constructed argument.
-
-#### `quote` function.
+### `quote` function.
 Because POSIX shell does't support array,
 we provide `quote` function utility to serialize array so you can use it safely in `eval` and `set` to change `"$@"`.
 
@@ -74,7 +70,8 @@ example usage:
 
 ```sh
 old_args=$(no_proc=y quote "$@")
-eval "set -- $(quote "a b 'c d' \"e'f\"")"
+new_args=$(quote "a b 'c d' \"e'f\"") || exit 1
+eval "set -- $new_args"
 for x; do echo ">$x<"; done
 # restore old args
 eval "set -- $old_args"
@@ -94,11 +91,11 @@ count=2 quote a b c d # will print: 'a' 'b'
 
 to disable special chars, set `no_proc` env to `y`, example:
 ```sh
-quote a "'b" c d # will error with message: unmatched single quote
+quote a "'b" c d # will error: unmatched single quote
 no_proc=y quote a "'b" c d # will print: 'a' ''\''b' 'c' 'd'
 ```
 
-#### `exists` function.
+### `exists` function.
 This helper function to check existance of volume, image, container, network.
 The function will exit with 0 if exists, or non-zero otherwise.
 
@@ -113,7 +110,7 @@ if ! exists network my-network; then
 fi
 ```
 
-#### `running` function.
+### `running` function.
 This helper function to check if container is running or not.
 The function will exit with 0 if the container is running, or non-zero otherwise.
 
@@ -128,33 +125,18 @@ if running my-container; then
 fi
 ```
 
-#### `calc_cksum` function.
+### `calc_cksum` function.
 This helper function is to calculate cheksum
 
-#### Adding arbitary command.
-You can add arbitrary command by defining function `command_<name>`, for example adding `reload` command to nginx spec file.
-
-Create spec file `nginx`
+example:
 ```sh
-#!/usr/bin/env docker.sh
-
-name=test_nginx
-image=nginx:alpine
-opts="
-  -p 8080:80
-"
-
-command_reload() {
-  "$file" exec nginx -s reload
-}
+calc_cksum hai # will print: 11742952433
 ```
 
-`./nginx reload` will be available.
-
-#### `panic` function
+### `panic` function
 Print arguments to stderr and exit with exitcode 1
 
-#### `main` function
+### `main` function
 This function is useful for invoking another command.
 
 example:
@@ -176,52 +158,87 @@ Start the container if not started yet. The container will be started based on `
 `pre_start` and `post_start` hook function will be called with different argument. That argument depend on following:
 
 - If container not exists yet:
-  - `pre_start run`
+  - `pre_start run` hook
   - `docker create ...`
-  - `pre_start created`
+  - `pre_start created` hook
   - `docker start ...`
-  - `post_start run`
+  - `post_start run` hook
 
 - If container already exists, but not started yet:
-  - `pre_start start`
+  - `pre_start start` hook
   - `docker start ...`
-  - `post_start start`
+  - `post_start start` hook
 
 
 ### `stop`
 Stop the container if not stopped. The container will be stoped based on `stop_opts` and/or any argument passed to this command. Only `-t`/`--time` are supported for now.
 
+option from command line is also supported
+
+example:
+
+    ./nginx stop
+
+or
+
+    ./nginx stop -t 5
+
 ### `restart`
 Restart the container. The container will be stoped based on `stop_opts` and/or any argument passed to this command. Only `-t`/`--time` are supported for now.
+
+option from command line is also supported
 
 ### `rm`
 Remove the container if exists. The container will be removed based on `rm_opts` and/or any argument passed to this. Only `-f`/`--force`, `-v`/`--volume`, `-l`/`--link` are supported for now.
 Network defined on `net` will be removed if this container is the last container attach to that network.
 
+option from command line is also supported
+
 ### `exec`
 Exec command inside container.
+
+example:
+
+    ./nginx exec sh
 
 ### `exec_root`
 Exec command inside container as root.
 
+example:
+
+    ./nginx exec sh
+
 ### `exec_as`
 Exec program inside the container as specified user.
+
+example:
+
+    ./nginx exec_as nobody sh
 
 ### `kill`
 Kill the container. The container will be stoped based on `kill_opts` and/or any argument passed to this command. Only `-s`/`--signal` are supported for now.
 
+option from command line is also supported
+
 ### `logs`
 Show logs of the container. Any argument passed to this command will used by underlying docker program.
 
+option from command line is also supported
+
 ### `port`
 Show port mapping of the container. Any argument passed to this command will used by underlying docker program.
+
+option from command line is also supported
 
 ### `status`
 Show container status, possibel output are any combination (in one line) of:
 - `different_opts`
 - `different_image`
+- `restarting`
 - `running`
+- `starting`
 - `not_running`
+- `not_healthy`
 - `no_container`
 
 ### `name`
@@ -235,6 +252,10 @@ Print `net`
 
 ### `show_cmds`
 Show the final constructed arguments for underlying docker program.
+
+example:
+
+    ./nginx exec_as show_cmds
 
 ### `show_running_cmds`
 Show the arguments for running current container.
@@ -251,6 +272,27 @@ Stop, remove, and start the container if running container using outdated image 
 
 ### `help`
 Help
+
+## Adding arbitary command.
+You can add arbitrary command by defining function `command_<name>`, for example adding `reload` command to nginx spec file.
+
+Create spec file `nginx`
+```sh
+#!/usr/bin/env docker.sh
+
+name=test_nginx
+image=nginx:alpine
+opts="
+  -p 8080:80
+"
+
+command_reload() {
+  "$file" exec nginx -s reload
+}
+```
+
+`./nginx reload` will be available.
+
 
 ## Example
 

@@ -27,9 +27,13 @@ see [full documentation](./DOCS.md) for more.
 ## Getting Started
 
 Lets say you want to start wordpress project, using mariadb as database.
+```sh
+mkdir my-project
+cd my-project
+```
 
-    mkdir my-project
-    cd my-project
+we need to create two spec file, unlike `docker-compose`, one spec file is used to control one container,
+so we need to create two files
 
 create file `wordpress` with following content:
 ```sh
@@ -44,10 +48,6 @@ opts="
   -e WORDPRESS_DB_HOST=mariadb
   -e WORDPRESS_DB_PASSWORD=password
 "
-
-pre_start() {
-  "$dir/mariadb" start
-}
 ```
 
 create file `mariadb` with following content:
@@ -63,13 +63,18 @@ opts="
 "
 ```
 
-then
+Please note that `wordpress` and `mariadb` must have same `net` value so each container can communicate
 
-    chmod 755 wordpress mariadb
+then, make those two file executable by running
+```sh
+chmod +x wordpress mariadb
+```
 
-start the project with running:
-
-    ./wordpress start
+and start the the container by running:
+```sh
+./mariadb start
+./wordpress start
+```
 
 and done. You can access wordpress on http://localhost:8080
 

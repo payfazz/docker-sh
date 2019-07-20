@@ -1,11 +1,15 @@
 #!/usr/bin/env docker.sh
 
+image=postgres:alpine
 must_local=y
-image=postgres:9-alpine
 net=net0
 opts="
   --network-alias postgres
   --restart always
   -v '$dir/data:/var/lib/postgresql/data'
   -p 5432:5432
+
+  --log-driver json-file
+  --log-opt max-size=50m
+  --log-opt max-file=3
 "

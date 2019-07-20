@@ -1,8 +1,7 @@
 #!/usr/bin/env docker.sh
 
-must_local=y
-name=$filename-$dirsum
 image=wordpress:latest
+must_local=y
 net=net-$dirsum
 opts="
   -p 8080:80
@@ -10,6 +9,10 @@ opts="
 
   -e WORDPRESS_DB_HOST=db
   -e WORDPRESS_DB_PASSWORD=password
+
+  --log-driver json-file
+  --log-opt max-size=50m
+  --log-opt max-file=3
 "
 
 pre_start() {

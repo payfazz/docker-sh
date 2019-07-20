@@ -1,12 +1,15 @@
 #!/usr/bin/env docker.sh
 
-must_local=y
-name=$filename-$dirsum
 image=mariadb:latest
+must_local=y
 net=net-$dirsum
 opts="
   -v '$dir/db-data:/var/lib/mysql'
   --network-alias db
 
   -e MYSQL_ROOT_PASSWORD=password
+
+  --log-driver json-file
+  --log-opt max-size=50m
+  --log-opt max-file=3
 "
