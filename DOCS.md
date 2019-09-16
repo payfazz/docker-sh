@@ -40,6 +40,7 @@ You should define following variable:
 | `must_local` | If set to `y`, it will ensure docker daemon is running on local machine, useful if you want to use bind-mount. |
 | `create_only` | If set to `y`, `start` command will only create the container, but won't run it. |
 | `skip_real_pull` | If set to `y`, `pull` command will not run `docker pull` to pull the image |
+| `isolate_net` | If set to `y` and `net` is not set, `net` will be set to `$dirname-$dirsum`
 
 *NOTE*: You can use `show_cmds` (see below) to see the final result of constructed argument.
 

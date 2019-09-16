@@ -614,5 +614,8 @@ exit 1
   dirsum=$(calc_cksum "$dir")
   name="$dirname-$filename-$dirsum"
   . "$file" || panic "error processing $file"
+  if [ -z "${net:-}" ] && [ "${isolate_net:-}" = "y" ]; then
+    net="$dirname-$dirsum"
+  fi
   _main "$@"
 fi
