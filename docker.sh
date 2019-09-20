@@ -613,9 +613,11 @@ exit 1
   dirname=$(basename "$dir")
   dirsum=$(calc_cksum "$dir")
   name="$dirname-$filename-$dirsum"
+  name=$(printf %s "$name" | LC_ALL=C tr -cd '[:alnum:]-')
   . "$file" || panic "error processing $file"
   if [ -z "${net:-}" ] && [ "${isolate_net:-}" = "y" ]; then
     net="$dirname-$dirsum"
+    net=$(printf %s "$net" | LC_ALL=C tr -cd '[:alnum:]-')
   fi
   _main "$@"
 fi
