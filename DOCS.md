@@ -267,6 +267,9 @@ Pull image specified in `image`.
 ### `ip`
 Show ip address of the container, that attach to network `net`.
 
+### `id`
+Show Container ID of the container.
+
 ### `update`
 Pull image specified in `image` (`-n`/`nopull` will skip this step).
 Stop, remove, and start the container if running container using outdated image or `show_cmds` and `show_running_cmds` have different value or `-f`/`--force` specified to this command.

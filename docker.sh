@@ -31,6 +31,7 @@ _help_str="Available commands:
   inspect            Show the low-level of the container
   stats              Show the stats of the container
   top                Show the running process inside container
+  id                 Show the id of the container
   help               Show this message
 
 NOTE:
@@ -482,6 +483,16 @@ _main() {
         exit 1
       else
         panic 'container is not running'
+      fi
+      exit 0
+      ;;
+
+    id)
+      if exists container "$name"; then
+        exec docker inspect -f '{{.Id}}' "$name"
+        exit 1
+      else
+        panic "container not exists"
       fi
       exit 0
       ;;
