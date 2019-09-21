@@ -173,8 +173,11 @@ _random() {
 _assert_local_docker() {
   str=$(_random)
   tmp_file=$(_random)
-  [ -z "${dir:-}" ] && dir=/tmp
-  tmp_file="$dir/$tmp_file"
+  if [ -z "${dir:-}" ]; then
+    tmp_file="/tmp/$tmp_file"
+  else
+    tmp_file="$dir/$tmp_file"
+  fi
   ( printf %s "$str" > "$tmp_file"; ) 2>/dev/null || return 1
   str2=$(docker run \
     --rm --entrypoint cat \
@@ -578,7 +581,7 @@ if [ "$define_user" = 1 ]; then
   ( (
     count=0
     while :; do
-      docker exec -u 0:0 "$randomname" sh -ceux "
+      docker exec -u 0:0 "$randomname" sh -ceu "
         sed -i '/[^:]*:[^:]*:$gid:/d' /etc/group
         printf '\nwork:x:%d:\n' $gid >> /etc/group
         sed -i '/[^:]*:[^:]*:$uid:/d' /etc/passwd
