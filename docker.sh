@@ -6,6 +6,8 @@
 # Note:
 # every code must compatible with POSIX shell
 
+set -eu
+
 _help_str="Available commands:
   start              Start the container
   stop               Stop the container
@@ -118,7 +120,7 @@ quote() (
 )
 
 calc_cksum() {
-  printf %s "${1:-}" | cksum | LC_ALL=C tr -d ' '
+  printf %s "$1" | cksum | LC_ALL=C tr -d ' '
 }
 
 exists() {
@@ -333,7 +335,7 @@ _main() {
       if running "$name"; then
         _is_managed || panic "container \"$name\" is not managed"
         user=; tmp_opts='-i '
-        [ -t 0 ] && [ -t 1 ] && [ -t 2 ] && tmp_opts="$tmp_opts-t "
+        [ -t 0 ] && [ -t 1 ] && [ -t 2 ] && tmp_opts="$tmp_opts-t " || :
         case "$action" in
           exec_root) user="0:0" ;;
           exec_as) user="${1:-}"; shift || : ;;
