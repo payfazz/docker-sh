@@ -627,7 +627,7 @@ exit 1
   file="$dir/$(basename "$file")"
   filename=$(basename "$file")
   dirname=$(basename "$dir")
-  dirsum=$(calc_cksum "$dir")
+  dirsum=$(calc_cksum "$(hostname 2>/dev/null || :):${dir}")
   name="$dirname-$filename-$dirsum"
   name=$(printf %s "$name" | LC_ALL=C tr -cd '[:alnum:]-')
   . "$file" || panic "error processing $file"
