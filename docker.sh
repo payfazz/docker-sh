@@ -170,7 +170,7 @@ _exec_if_fn_exists() (
 )
 
 _random() {
-  LC_ALL=C tr -cd '[:alnum:]' < /dev/urandom | head -c 16
+  LC_ALL=C tr -cd '[:alnum:]' < /dev/urandom 2>/dev/null | head -c 16
 }
 
 _assert_local_docker() {
