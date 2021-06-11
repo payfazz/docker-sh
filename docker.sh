@@ -561,9 +561,10 @@ for arg in "$@"; do
   esac
 done
 
-mkdir -p "$PWD/.docker-work-home"
-if ! [ -f "$PWD/.docker-work-home/.bashrc" ]; then
-  cat <<EOF > "$PWD/.docker-work-home/.bashrc"
+if [ "$define_user" = 1 ]; then
+  mkdir -p "$PWD/.docker-work-home"
+  if ! [ -f "$PWD/.docker-work-home/.bashrc" ]; then
+    cat <<EOF > "$PWD/.docker-work-home/.bashrc"
 if [[ -z "\$DOCKER_WORK_BOOTSTRAPED" ]]; then
   count=0
   while :; do
@@ -580,6 +581,7 @@ if [[ -z "\$DOCKER_WORK_BOOTSTRAPED" ]]; then
   unset count
 fi
 EOF
+  fi
 fi
 
 docker_cmds="
