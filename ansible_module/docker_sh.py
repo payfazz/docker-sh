@@ -62,7 +62,7 @@ def main():
 
     def run_command(cmd):
         proc = subprocess.Popen([path, cmd],
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = proc.communicate()
         if proc.returncode != 0:
             module.fail_json(msg="failed when executing '" + cmd + "' command: (" + str(proc.returncode) + ") " + err, **result)
